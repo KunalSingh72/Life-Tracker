@@ -1,0 +1,8 @@
+{
+  "name": "@life-tracker/validation",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}
