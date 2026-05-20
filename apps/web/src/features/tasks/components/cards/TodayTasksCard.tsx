@@ -31,8 +31,6 @@ export default function TodayTasksCard() {
   const tasks = useTodayTasks();
   const { reorderTasks, clearAll, clearCompleted, updateTask } =
     useTasksStore();
-
-  // Dynamic Dialog State
   const [dialogConfig, setDialogConfig] = useState<DialogConfig>(null);
 
   const sensors = useSensors(
@@ -62,24 +60,24 @@ export default function TodayTasksCard() {
 
   return (
     <>
-      <Card className="flex flex-col h-200 border border-border shadow-sm bg-bg-card">
-        <CardHeader className="border-b border-border pb-4">
-          <CardTitle className="text-xl font-bold text-center text-text-primary">
+      <Card className="flex flex-col h-[calc(100vh-14rem)] min-h-150 border border-border shadow-md bg-bg-card transition-all">
+        <CardHeader className="border-b border-border pb-5">
+          <CardTitle className="text-2xl font-bold text-center text-text-primary">
             Today
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 custom-scrollbar">
-          <div className="sticky top-0 z-10 flex flex-col gap-3 bg-bg-card pb-2">
+        <CardContent className="flex flex-1 flex-col gap-4 overflow-y-auto p-5 custom-scrollbar">
+          <div className="sticky top-0 z-10 flex flex-col gap-4 bg-bg-card pb-3">
             <TaskInput />
 
-            <div className="flex items-center justify-between gap-2 px-1 border-t border-border pt-3 mt-1">
+            <div className="flex items-center justify-between gap-2 px-2 border-t border-border pt-4 mt-1">
               <button
                 onClick={handleMarkAllCompleted}
                 disabled={tasks.length === 0 || remainingCount === 0}
-                className="text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+                className="text-sm font-bold text-primary hover:text-primary/80 transition-colors disabled:opacity-40"
               >
-                Mark all completed
+                Mark all done
               </button>
               <div className="flex gap-4">
                 <button
@@ -91,7 +89,7 @@ export default function TodayTasksCard() {
                     })
                   }
                   disabled={tasks.length === 0}
-                  className="text-xs font-semibold text-text-secondary hover:text-red-500 transition-colors disabled:opacity-50"
+                  className="text-sm font-semibold text-text-secondary hover:text-red-500 transition-colors disabled:opacity-40"
                 >
                   Clear all
                 </button>
@@ -99,12 +97,12 @@ export default function TodayTasksCard() {
                   onClick={() =>
                     setDialogConfig({
                       title: "Clear Completed",
-                      desc: "Are you sure you want to delete all completed tasks? This cannot be undone.",
+                      desc: "Delete all completed tasks?",
                       action: () => clearCompleted("today"),
                     })
                   }
                   disabled={tasks.length - remainingCount === 0}
-                  className="text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+                  className="text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40"
                 >
                   Clear completed
                 </button>
@@ -112,10 +110,10 @@ export default function TodayTasksCard() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 pb-2">
+          <div className="flex flex-col gap-3 pb-2">
             {tasks.length === 0 ? (
-              <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border text-sm text-text-secondary bg-bg-main/50">
-                No tasks for today.
+              <div className="flex h-40 items-center justify-center rounded-2xl border-2 border-dashed border-border text-base font-medium text-text-secondary bg-bg-main/50">
+                No tasks for today. Relax!
               </div>
             ) : (
               <DndContext
@@ -136,14 +134,13 @@ export default function TodayTasksCard() {
           </div>
         </CardContent>
 
-        <CardFooter className="justify-center border-t border-border bg-bg-main/20 py-3">
-          <span className="text-xs font-bold text-text-secondary">
+        <CardFooter className="justify-center border-t border-border bg-bg-main/20 py-4">
+          <span className="text-sm font-bold text-text-secondary bg-bg-card px-3 py-1 rounded-full border border-border">
             {remainingCount} items remaining
           </span>
         </CardFooter>
       </Card>
 
-      {/* Unified Dynamic Dialog */}
       <ConfirmDialog
         isOpen={!!dialogConfig}
         title={dialogConfig?.title || ""}

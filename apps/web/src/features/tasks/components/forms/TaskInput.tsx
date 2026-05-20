@@ -43,29 +43,30 @@ export default function TaskInput() {
   ];
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 p-1">
-      <div className="flex gap-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 p-1">
+      <div className="flex gap-3">
         <input
           {...register("title")}
           type="text"
           placeholder="What needs to be done?"
           autoComplete="off"
-          className="flex-1 rounded-xl border border-border bg-bg-main px-4 py-3 text-sm text-text-primary outline-none focus:border-primary transition-colors placeholder:text-text-secondary"
+          // Increased padding and font size to match new UI
+          className="flex-1 rounded-xl border-2 border-border bg-bg-main px-5 py-4 text-base font-medium text-text-primary outline-none focus:border-primary transition-all placeholder:text-text-secondary/70 focus:shadow-sm"
         />
         <button
           type="submit"
           disabled={!isValid}
-          className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md transition hover:bg-primary/90 disabled:opacity-50"
+          className="flex h-15 w-15 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:transform-none disabled:opacity-50"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-6 w-6" />
         </button>
       </div>
 
-      <div className="flex items-center gap-4 px-1">
+      <div className="flex items-center gap-5 px-2">
         {priorities.map((p) => (
           <label
             key={p.value}
-            className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold capitalize text-text-secondary hover:text-text-primary transition-colors"
+            className="flex items-center gap-2 cursor-pointer text-sm font-bold capitalize text-text-secondary hover:text-text-primary transition-colors"
           >
             <input
               type="radio"
@@ -76,8 +77,10 @@ export default function TaskInput() {
               className="hidden"
             />
             <Circle
-              className={`h-3.5 w-3.5 transition-opacity ${
-                activePriority === p.value ? p.colorClass : "text-text-secondary opacity-40"
+              className={`h-4 w-4 transition-all duration-300 ${
+                activePriority === p.value
+                  ? `${p.colorClass} scale-110`
+                  : "text-text-secondary opacity-40"
               }`}
             />
             {p.value}

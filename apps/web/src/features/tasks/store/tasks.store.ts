@@ -177,12 +177,10 @@ export const useTasksStore = create<TasksState>()(
     }
   )
 );
-
 // --- Custom Hooks for View Layer Orchestration --- //
 
 export const useTodayTasks = () => {
   const tasks = useTasksStore((state) => state.tasks);
-
   return useMemo(() => {
     return tasks
       .filter((t) => t.dueDate && isToday(t.dueDate))
@@ -192,10 +190,10 @@ export const useTodayTasks = () => {
 
 export const useOverdueTasksGrouped = (): GroupedOverdueTasks => {
   const tasks = useTasksStore((state) => state.tasks);
-
   return useMemo(() => {
+    // FIX: Removed `!t.completed` filter. Overdue tasks now remain visible when completed.
     const overdue = tasks.filter(
-      (t) => t.dueDate && isPast(t.dueDate) && !t.completed
+      (t) => t.dueDate && isPast(t.dueDate)
     );
 
     return overdue.reduce((groups: GroupedOverdueTasks, task) => {
@@ -206,11 +204,12 @@ export const useOverdueTasksGrouped = (): GroupedOverdueTasks => {
     }, {});
   }, [tasks]);
 };
+
 export const useUpcomingTasks = () => {
   const tasks = useTasksStore((state) => state.tasks);
-
   return useMemo(() => {
     return tasks
+      // FIX: Removed `!t.completed` filter here as well.
       .filter((t) => t.dueDate && isFuture(t.dueDate))
       .sort(
         (a, b) =>
