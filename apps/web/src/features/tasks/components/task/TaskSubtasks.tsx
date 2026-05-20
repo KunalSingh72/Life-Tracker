@@ -28,18 +28,18 @@ export default function TaskSubtasks({ taskId, subTasks }: TaskSubtasksProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-1 pb-3 pl-[3.25rem] pr-3 pt-1">
+      <div className="flex flex-col gap-1 pb-3 pl-13 pr-3 pt-1">
         {subTasks.map((st) => (
           <div
             key={st.id}
-            className="group flex min-h-[2rem] items-center gap-3 rounded-md px-2 py-1 hover:bg-bg-card transition-colors"
+            className="group flex min-h-8 items-center gap-3 rounded-md px-2 py-1 hover:bg-bg-card transition-colors"
           >
             <CornerDownRight className="h-3 w-3 text-text-secondary/50 shrink-0" />
 
             <button
               onClick={() => toggleSubTaskCompletion(taskId, st.id)}
               className={cn(
-                "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
                 st.completed
                   ? "border-primary bg-primary text-white"
                   : "border-text-secondary bg-transparent hover:border-primary",
@@ -79,7 +79,7 @@ export default function TaskSubtasks({ taskId, subTasks }: TaskSubtasksProps) {
           className="mt-1 flex items-center gap-3 rounded-md px-2 py-1 focus-within:bg-bg-card transition-colors"
         >
           <CornerDownRight className="h-3 w-3 text-text-secondary/50 shrink-0" />
-          <div className="h-4 w-4 shrink-0 rounded-[4px] border border-dashed border-text-secondary/50" />
+          <div className="h-4 w-4 shrink-0 rounded-sm border border-dashed border-text-secondary/50" />
 
           <input
             type="text"

@@ -64,7 +64,6 @@ life-tracker/
 │       │   │   │   │   │   ├── TaskItem.tsx
 │       │   │   │   │   │   └── TaskSubtasks.tsx
 │       │   │   │   │   │
-│       │   │   │   │   │── TaskForm.tsx
 │       │   │   │   │   └── ScheduleModal.tsx
 │       │   │   │   │
 │       │   │   │   ├── hooks/
@@ -137,6 +136,7 @@ life-tracker/
 │       ├── vite.config.ts
 │       ├── package.json
 │       ├── tsconfig.app.json
+│       ├── tsconfig.node.json
 │       └── eslint.config.js
 │
 ├── packages/
@@ -154,6 +154,7 @@ life-tracker/
 │   │   │
 │   │   ├── src/
 │   │   │   ├── task.types.ts
+│   │   │   ├── note.types.ts
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── package.json
@@ -172,6 +173,7 @@ life-tracker/
 │       │
 │       ├── src/
 │       │   ├── task.schema.ts
+│       │   ├── note.schema.ts
 │       │   └── index.ts
 │       │
 │       ├── package.json
@@ -268,6 +270,7 @@ export default function AppProviders({ children }: Props) {
     </ThemeProvider>
   );
 }
+
 --------
 QueryProvider.tsx
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -283,6 +286,7 @@ export default function QueryProvider({ children }: Props) {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
+
 ---------------
 ThemeContext.tsx
 import { createContext } from "react";
@@ -322,6 +326,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     </ThemeContext.Provider>
   );
 }
+
 -----------
 Layout.tsx
 import { Outlet } from "react-router-dom";
@@ -352,6 +357,7 @@ function Layout() {
 }
 
 export default Layout;
+
 --------------------
 Notifications.tsx
 import {BellDot} from "lucide-react";
@@ -455,6 +461,7 @@ export default function Sidebar() {
     </aside>
   );
 }
+
 -------------------
 Topbar.tsx
 import { useLocation } from "react-router-dom";
@@ -531,6 +538,7 @@ export default function Topbar() {
     </header>
   );
 }
+
 -------------
 UpcomingEvents.tsx
 import { Calendar } from "lucide-react";
@@ -549,6 +557,7 @@ export default function UpcomingEvents() {
     </button>
   );
 }
+
 ---------------------
 BudgetPage.tsx
 export default function BudgetPage() {
@@ -833,6 +842,7 @@ export default function NotesPage() {
     </div>
   );
 }
+
 ------------
 NoteCard.tsx
 import { Pin, Trash2, Copy, Check } from "lucide-react";
@@ -974,6 +984,7 @@ export default function NoteCard({
     </div>
   );
 }
+
 ------------
 EditorToolbar.tsx
 import { type Editor } from "@tiptap/react";
@@ -1105,6 +1116,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
     </div>
   );
 }
+
 -------------
 RichTextEditor.tsx
 import { useEffect, useRef } from "react";
@@ -1173,6 +1185,7 @@ export default function RichTextEditor({
     </div>
   );
 }
+
 ----------
 NoteEditorModal.tsx
 import { useState, useRef, useEffect } from "react";
@@ -1312,6 +1325,7 @@ export default function NoteEditorModal({
     </div>
   );
 }
+
 -----------
 TrashModal.tsx
 import { X, RotateCcw, Trash2, AlertTriangle } from "lucide-react";
@@ -1428,6 +1442,7 @@ export default function TrashModal({ isOpen, onClose }: TrashModalProps) {
     </>
   );
 }
+
 ----------------
 notes.store.ts
 import { create } from "zustand";
@@ -1642,7 +1657,6 @@ export const getNoteColorClasses = (color: NoteColor) => {
       return "bg-bg-card border-border hover:border-primary/40";
   }
 };
-
 -------------
 TasksPage.tsx
 import TodayTasksCard from "./components/cards/TodayTasksCard";
@@ -1661,10 +1675,6 @@ export default function TasksPage() {
         </p>
       </div>
 
-      {/* Responsive Fluid Grid
-        Uses full width and flex-1 to push to the bottom of the container. 
-        items-start ensures cards don't stretch vertically.
-      */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 items-start pb-8">
         <TodayTasksCard />
         <OverdueTasksCard />
@@ -1673,6 +1683,7 @@ export default function TasksPage() {
     </div>
   );
 }
+
 ------------
 OverdueTasksCard.tsx
 import { useState } from "react";
@@ -1819,6 +1830,7 @@ export default function OverdueTasksCard() {
     </>
   );
 }
+
 -------------
 TodayTasksCard.tsx
 import { useMemo, useState } from "react";
@@ -1981,6 +1993,7 @@ export default function TodayTasksCard() {
     </>
   );
 }
+
 ---------------
 UpcomingTasksCard.tsx
 import { useState } from "react";
@@ -2111,6 +2124,7 @@ export default function UpcomingTasksCard() {
     </>
   );
 }
+
 -----------
 TaskInput.tsx
 import { useState } from "react";
@@ -2427,6 +2441,7 @@ export default function TaskItem({ task, isDraggable = true }: TaskItemProps) {
     </>
   );
 }
+
 ---------------
 TaskSubtasks.tsx
 import { useState } from "react";
@@ -2459,18 +2474,18 @@ export default function TaskSubtasks({ taskId, subTasks }: TaskSubtasksProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-1 pb-3 pl-[3.25rem] pr-3 pt-1">
+      <div className="flex flex-col gap-1 pb-3 pl-13 pr-3 pt-1">
         {subTasks.map((st) => (
           <div
             key={st.id}
-            className="group flex min-h-[2rem] items-center gap-3 rounded-md px-2 py-1 hover:bg-bg-card transition-colors"
+            className="group flex min-h-8 items-center gap-3 rounded-md px-2 py-1 hover:bg-bg-card transition-colors"
           >
             <CornerDownRight className="h-3 w-3 text-text-secondary/50 shrink-0" />
 
             <button
               onClick={() => toggleSubTaskCompletion(taskId, st.id)}
               className={cn(
-                "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
                 st.completed
                   ? "border-primary bg-primary text-white"
                   : "border-text-secondary bg-transparent hover:border-primary",
@@ -2510,7 +2525,7 @@ export default function TaskSubtasks({ taskId, subTasks }: TaskSubtasksProps) {
           className="mt-1 flex items-center gap-3 rounded-md px-2 py-1 focus-within:bg-bg-card transition-colors"
         >
           <CornerDownRight className="h-3 w-3 text-text-secondary/50 shrink-0" />
-          <div className="h-4 w-4 shrink-0 rounded-[4px] border border-dashed border-text-secondary/50" />
+          <div className="h-4 w-4 shrink-0 rounded-sm border border-dashed border-text-secondary/50" />
 
           <input
             type="text"
@@ -2544,6 +2559,7 @@ export default function TaskSubtasks({ taskId, subTasks }: TaskSubtasksProps) {
     </>
   );
 }
+
 ----------------
 ScheduleModal.tsx
 import { useState } from "react";
@@ -2750,6 +2766,7 @@ export default function ScheduleModal() {
     </div>
   );
 }
+
 ------------
 tasks.store.ts
 import { useMemo } from "react";
@@ -3065,6 +3082,7 @@ export const useUIStore = create<UIStore>((set) => ({
   openScheduleModal: () => set({ isScheduleModalOpen: true }),
   closeScheduleModal: () => set({ isScheduleModalOpen: false }),
 }));
+
 ----------------
 index.css
 @import "tailwindcss";
@@ -3230,6 +3248,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
 ---------
 index.html
 <!doctype html>
@@ -3245,6 +3264,7 @@ index.html
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
 -----------------
 eslint.config.js
 import js from '@eslint/js'
@@ -3269,6 +3289,7 @@ export default defineConfig([
     },
   },
 ])
+
 -----------------
 package.json
 {
@@ -3310,6 +3331,7 @@ package.json
     "vite": "^8.0.12"
   }
 }
+
 ----------
 tsconfig.app.json
 {
@@ -3346,7 +3368,9 @@ tsconfig.app.json
   },
   "include": ["src"]
 }
+
 ----------
+tsconfig.node.json
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
@@ -3408,6 +3432,16 @@ export default defineConfig({
   },
 });
 --------------
+tsconfig.json
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+----------
 life-tracker/package.json (root)
 {
   "name": "@life-tracker/web",
