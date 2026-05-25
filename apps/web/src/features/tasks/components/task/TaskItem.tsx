@@ -9,12 +9,14 @@ import {
   Circle,
   ChevronDown,
   ChevronRight,
+  Target, // Keep this imported
 } from "lucide-react";
 import type { Task } from "@life-tracker/types";
 import { useTasksStore } from "../../store/tasks.store";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import TaskSubtasks from "./TaskSubtasks";
 import { cn } from "@/lib/utils";
+import { useGoalsStore } from "../../../goals/store/goals.store";
 
 interface TaskItemProps {
   task: Task;
@@ -42,6 +44,11 @@ export default function TaskItem({ task, isDraggable = true }: TaskItemProps) {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  const { goals } = useGoalsStore();
+  const linkedGoal = task.goalId
+    ? goals.find((g) => g.id === task.goalId)
+    : null;
 
   useEffect(() => {
     if (isEditing && inputRef.current) inputRef.current.focus();
@@ -80,7 +87,7 @@ export default function TaskItem({ task, isDraggable = true }: TaskItemProps) {
         ref={setNodeRef}
         style={style}
         {...attributes}
-        {...listeners} // FIX: Entire card is now the drag target
+        {...listeners}
         className={cn(
           "group relative flex flex-col rounded-xl border transition-all duration-300",
           task.completed
@@ -92,9 +99,8 @@ export default function TaskItem({ task, isDraggable = true }: TaskItemProps) {
         )}
       >
         <div
-          className="flex min-h-16 items-center gap-4 p-4" // Increased height and padding
+          className="flex min-h-16 items-center gap-4 p-4"
           onPointerDown={() => {
-            // Allow double-click or standard click to expand without dragging
             if (!isDragging && !isEditing) setShowSubtasks(!showSubtasks);
           }}
         >
@@ -105,15 +111,15 @@ export default function TaskItem({ task, isDraggable = true }: TaskItemProps) {
           )}
 
           <button
-            onPointerDown={(e) => e.stopPropagation()} // FIX: Prevent dragging when clicking checkbox
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               toggleTaskCompletion(task.id);
             }}
             className={cn(
-              "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-300", // Larger checkbox
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-300",
               task.completed
-                ? "border-primary bg-primary text-white scale-110" // Pop animation on complete
+                ? "border-primary bg-primary text-white scale-110"
                 : "border-text-secondary/30 bg-transparent hover:border-primary hover:bg-primary/10",
             )}
           >
@@ -124,7 +130,7 @@ export default function TaskItem({ task, isDraggable = true }: TaskItemProps) {
 
           <div
             className="flex-1 overflow-hidden"
-            onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking text
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               if (!isEditing && !task.completed) {
@@ -143,23 +149,35 @@ export default function TaskItem({ task, isDraggable = true }: TaskItemProps) {
                 className="w-full bg-transparent text-base font-semibold text-text-primary outline-none"
               />
             ) : (
-              <div
-                className={cn(
-                  "cursor-text truncate text-base transition-all hover:text-primary", // Larger text
-                  task.completed
-                    ? "text-text-secondary line-through opacity-70"
-                    : "text-text-primary font-semibold",
+              <div className="flex flex-col gap-1">
+                <div
+                  className={cn(
+                    "cursor-text truncate text-base transition-all hover:text-primary",
+                    task.completed
+                      ? "text-text-secondary line-through opacity-70"
+                      : "text-text-primary font-semibold",
+                  )}
+                >
+                  {task.title}
+                </div>
+
+                {/* FIX: Moved Goal Badge directly under the title for mobile scaling */}
+                {linkedGoal && !task.completed && (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-primary opacity-80">
+                    <Target className="h-3 w-3" />
+                    <span className="max-w-[200px] truncate">
+                      {linkedGoal.title}
+                    </span>
+                  </div>
                 )}
-              >
-                {task.title}
               </div>
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 md:gap-3">
             {task.subTasks.length > 0 && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-bg-card px-2.5 py-1 text-xs font-bold text-text-secondary border border-border shadow-sm">
-                <ListTree className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1.5 rounded-lg border border-border bg-bg-card px-2 py-1 text-[10px] font-bold text-text-secondary shadow-sm">
+                <ListTree className="h-3 w-3" />
                 {completedSubtasksCount}/{task.subTasks.length}
               </div>
             )}

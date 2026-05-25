@@ -21,10 +21,12 @@ export const NoteSchema = z.object({
   deletedAt: z.string().datetime().nullable().default(null),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  goalId: z.string().nullable().optional()
 });
 
 export const CreateNoteSchema = NoteSchema.pick({
   title: true,
   content: true,
   color: true,
+  goalId:true
 }).partial();

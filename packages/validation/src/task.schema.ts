@@ -8,24 +8,26 @@ export const SubTaskSchema = z.object({
   completed: z.boolean().default(false),
 });
 
-// The strict domain model for a fully created Task
 export const TaskSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1, "Task title is required").max(255),
   completed: z.boolean().default(false),
   priority: TaskPrioritySchema.default("low"),
-  dueDate: z.string().datetime().nullable(), 
+  dueDate: z.string().datetime().nullable().optional(), 
   createdAt: z.string().datetime(),
   order: z.number().default(0), 
   subTasks: z.array(SubTaskSchema).default([]),
+  goalId: z.string().nullable().optional(), 
+  milestoneId: z.string().nullable().optional(),
 });
 
-// The lenient payload for creating a new Task from the UI
 export const CreateTaskSchema = z.object({
   title: z.string().min(1, "Task title is required").max(255),
   priority: TaskPrioritySchema.optional(),
-  dueDate: z.string().datetime().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
   completed: z.boolean().optional(),
   order: z.number().optional(),
   subTasks: z.array(SubTaskSchema).optional(),
+  goalId: z.string().nullable().optional(), 
+  milestoneId: z.string().nullable().optional(),
 });

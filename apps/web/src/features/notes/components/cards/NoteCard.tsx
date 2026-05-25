@@ -1,6 +1,7 @@
-import { Pin, Trash2, Copy, Check } from "lucide-react";
+import { Pin, Trash2, Copy, Check, Target } from "lucide-react";
 import type { Note } from "@life-tracker/types";
 import { useNotesStore } from "../../store/notes.store";
+import { useGoalsStore } from "@/features/goals/store/goals.store"; 
 import {
   extractPreviewText,
   formatNoteDate,
@@ -26,6 +27,12 @@ export default function NoteCard({
   selectionMode = false,
 }: NoteCardProps) {
   const { togglePin, duplicateNote } = useNotesStore();
+
+  // NEW: Fetch linked goal
+  const { goals } = useGoalsStore();
+  const linkedGoal = note.goalId
+    ? goals.find((g) => g.id === note.goalId)
+    : null;
 
   const previewText = extractPreviewText(note.content);
   const colorClasses = getNoteColorClasses(note.color);
@@ -129,10 +136,19 @@ export default function NoteCard({
         )}
       </div>
 
-      <div className="mt-auto border-t border-border/50 pt-3">
+      {/* INTEGRATED: Flexbox layout to accommodate the date and the new Goal Badge */}
+      <div className="mt-auto flex items-center justify-between border-t border-border/50 pt-3">
         <span className="text-xs font-semibold text-text-secondary/70">
           {formatNoteDate(note.updatedAt)}
         </span>
+
+        {/* THE LINKED GOAL BADGE */}
+        {linkedGoal && (
+          <div className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary shadow-sm">
+            <Target className="h-3 w-3 shrink-0" />
+            <span className="max-w-[120px] truncate">{linkedGoal.title}</span>
+          </div>
+        )}
       </div>
     </div>
   );

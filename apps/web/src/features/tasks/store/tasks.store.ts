@@ -1,88 +1,67 @@
-import { useMemo } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { nanoid } from "nanoid";
-import type { Task, CreateTaskPayload, GroupedOverdueTasks } from "@life-tracker/types";
-import { isToday, isPast, isFuture, formatOverdueCategory } from "@life-tracker/utils";
+import { isToday, isPast, isFuture, format } from "date-fns";
+import { useMemo } from "react";
+import type { Task, CreateTaskPayload } from "@life-tracker/types";
+import { useGoalsStore } from "../../goals/store/goals.store";
 
 interface TasksState {
   tasks: Task[];
-  
-  // Actions
-  addTask: (payload: CreateTaskPayload) => void;
+  addTask: (payload: CreateTaskPayload) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
   toggleTaskCompletion: (id: string) => void;
-  reorderTasks: (startIndex: number, endIndex: number) => void;
+  deleteTask: (id: string) => void;
+  reorderTasks: (oldIndex: number, newIndex: number) => void;
   
-  // Subtask Actions
   addSubTask: (taskId: string, title: string) => void;
-  deleteSubTask: (taskId: string, subTaskId: string) => void;
   toggleSubTaskCompletion: (taskId: string, subTaskId: string) => void;
+  deleteSubTask: (taskId: string, subTaskId: string) => void;
   
-  // Bulk Actions
-  clearAll: (type: "today" | "overdue" | "upcoming") => void;
-  clearCompleted: (type: "today" | "overdue" | "upcoming") => void;
+  clearAll: (view: "today" | "overdue" | "upcoming") => void;
+  clearCompleted: (view: "today" | "overdue" | "upcoming") => void;
 }
 
 export const useTasksStore = create<TasksState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       tasks: [],
 
       addTask: (payload) => {
-        set((state) => {
-          const priorityWeight = { high: 0, medium: 1, low: 2 };
-          const newTaskPriorityWeight = priorityWeight[payload.priority || "low"];
+        const id = nanoid();
+        const newTask: Task = {
+          id,
+          title: payload.title,
+          priority: payload.priority || "low",
+          completed: payload.completed || false,
+          dueDate: payload.dueDate || new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          subTasks: payload.subTasks || [],
+          order: 0,
+          goalId: payload.goalId || null,
+          milestoneId: (payload as CreateTaskPayload & { milestoneId?: string | null }).milestoneId || null,
+        };
 
-          // Separate today's tasks to calculate the correct insertion order
-          const todayTasks = state.tasks
-            .filter((t) => t.dueDate && isToday(t.dueDate))
-            .sort((a, b) => a.order - b.order);
-          
-          const otherTasks = state.tasks.filter((t) => !t.dueDate || !isToday(t.dueDate));
-
-          // Find the index where this new task should be inserted based on priority
-          let insertIndex = todayTasks.length;
-          for (let i = 0; i < todayTasks.length; i++) {
-            const currentTaskWeight = priorityWeight[todayTasks[i].priority];
-            if (newTaskPriorityWeight < currentTaskWeight) {
-              insertIndex = i;
-              break;
-            }
-          }
-
-          const newTask: Task = {
-            id: nanoid(),
-            title: payload.title,
-            priority: payload.priority || "low",
-            completed: payload.completed || false,
-            dueDate: payload.dueDate || new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            subTasks: payload.subTasks || [],
-            order: 0, // Will be recalculated below
-          };
-
-          // Insert the task and recalculate orders sequentially
-          todayTasks.splice(insertIndex, 0, newTask);
-          const reorderedTodayTasks = todayTasks.map((t, index) => ({ ...t, order: index }));
-
-          return { tasks: [...otherTasks, ...reorderedTodayTasks] };
-        });
+        set((state) => ({ tasks: [newTask, ...state.tasks] }));
+        
+        if (newTask.goalId) {
+          useGoalsStore.getState().syncGoalProgress(newTask.goalId);
+        }
+        return newTask.id;
       },
 
       updateTask: (id, updates) => {
+        let linkedGoalId: string | null | undefined = null;
         set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, ...updates } : task
-          ),
+          tasks: state.tasks.map((task) => {
+            if (task.id === id) {
+              linkedGoalId = task.goalId;
+              return { ...task, ...updates };
+            }
+            return task;
+          }),
         }));
-      },
-
-      deleteTask: (id) => {
-        set((state) => ({
-          tasks: state.tasks.filter((task) => task.id !== id),
-        }));
+        if (linkedGoalId) useGoalsStore.getState().syncGoalProgress(linkedGoalId);
       },
 
       toggleTaskCompletion: (id) => {
@@ -91,22 +70,38 @@ export const useTasksStore = create<TasksState>()(
             task.id === id ? { ...task, completed: !task.completed } : task
           ),
         }));
+
+        // FIX 3: Tell the Goal to recalculate progress based on this toggled task
+        const task = get().tasks.find(t => t.id === id);
+        if (task && task.goalId) {
+          useGoalsStore.getState().syncGoalProgress(task.goalId);
+        }
       },
 
-      reorderTasks: (startIndex, endIndex) => {
+      deleteTask: (id) => {
+        // Grab the task BEFORE deleting it so we know which goal to update
+        const taskToDelete = get().tasks.find(t => t.id === id);
+        
+        set((state) => ({
+          tasks: state.tasks.filter((task) => task.id !== id),
+        }));
+
+        // FIX 4: Tell the Goal to recalculate
+        if (taskToDelete && taskToDelete.goalId) {
+          useGoalsStore.getState().syncGoalProgress(taskToDelete.goalId);
+        }
+      },
+
+      reorderTasks: (oldIndex, newIndex) => {
         set((state) => {
-          // Only reorder "Today" tasks for now as per requirements
-          const todayTasks = state.tasks.filter(t => t.dueDate && isToday(t.dueDate)).sort((a, b) => a.order - b.order);
-          const otherTasks = state.tasks.filter(t => !t.dueDate || !isToday(t.dueDate));
-          
-          const result = Array.from(todayTasks);
-          const [removed] = result.splice(startIndex, 1);
-          result.splice(endIndex, 0, removed);
-
-          // Update order properties
-          const reorderedTodayTasks = result.map((t, index) => ({ ...t, order: index }));
-
-          return { tasks: [...otherTasks, ...reorderedTodayTasks] };
+          const newTasks = Array.from(state.tasks);
+          const [movedTask] = newTasks.splice(oldIndex, 1);
+          newTasks.splice(newIndex, 0, movedTask);
+          const reorderedTasks = newTasks.map((task, index) => ({
+            ...task,
+            order: index,
+          }));
+          return { tasks: reorderedTasks };
         });
       },
 
@@ -123,53 +118,72 @@ export const useTasksStore = create<TasksState>()(
         }));
       },
 
-      deleteSubTask: (taskId, subTaskId) => {
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? { ...task, subTasks: task.subTasks.filter((st) => st.id !== subTaskId) }
-              : task
-          ),
-        }));
-      },
-
       toggleSubTaskCompletion: (taskId, subTaskId) => {
+        let linkedGoalId: string | null | undefined = null;
         set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  subTasks: task.subTasks.map((st) =>
-                    st.id === subTaskId ? { ...st, completed: !st.completed } : st
-                  ),
-                }
-              : task
-          ),
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              linkedGoalId = task.goalId;
+              const updatedSubTasks = task.subTasks.map((st) =>
+                st.id === subTaskId ? { ...st, completed: !st.completed } : st
+              );
+              // Parent auto-completes if all subtasks are finished
+              const allSubTasksCompleted = updatedSubTasks.length > 0 && updatedSubTasks.every(st => st.completed);
+              
+              return { 
+                ...task, 
+                subTasks: updatedSubTasks,
+                completed: allSubTasksCompleted ? true : (task.completed && !allSubTasksCompleted ? false : task.completed)
+              };
+            }
+            return task;
+          }),
         }));
+        if (linkedGoalId) useGoalsStore.getState().syncGoalProgress(linkedGoalId);
       },
 
-      clearAll: (type) => {
+      deleteSubTask: (taskId, subTaskId) => {
+        let linkedGoalId: string | null | undefined = null;
         set((state) => ({
-          tasks: state.tasks.filter((t) => {
+          tasks: state.tasks.map((task) => {
+            if (task.id === taskId) {
+              linkedGoalId = task.goalId;
+              return { ...task, subTasks: task.subTasks.filter((st) => st.id !== subTaskId) };
+            }
+            return task;
+          }),
+        }));
+        if (linkedGoalId) useGoalsStore.getState().syncGoalProgress(linkedGoalId);
+      },
+
+      clearAll: (view) => {
+        set((state) => {
+          const remainingTasks = state.tasks.filter((t) => {
             if (!t.dueDate) return true;
-            if (type === "today" && isToday(t.dueDate)) return false;
-            if (type === "overdue" && isPast(t.dueDate) && !t.completed) return false;
-            if (type === "upcoming" && isFuture(t.dueDate)) return false;
+            if (view === "today" && isToday(t.dueDate)) return false;
+            if (view === "overdue" && isPast(t.dueDate) && !isToday(t.dueDate)) return false;
+            if (view === "upcoming" && isFuture(t.dueDate) && !isToday(t.dueDate)) return false;
             return true;
-          }),
-        }));
+          });
+          
+          // Note: In a true production app, you might want to iterate deleted tasks and sync goals here. 
+          // For now, this bulk clears the specific view.
+          return { tasks: remainingTasks };
+        });
       },
 
-      clearCompleted: (type) => {
-        set((state) => ({
-          tasks: state.tasks.filter((t) => {
-            if (!t.dueDate || !t.completed) return true;
-            if (type === "today" && isToday(t.dueDate)) return false;
-            if (type === "overdue" && isPast(t.dueDate)) return false;
-            if (type === "upcoming" && isFuture(t.dueDate)) return false;
+      clearCompleted: (view) => {
+        set((state) => {
+          const remainingTasks = state.tasks.filter((t) => {
+            if (!t.completed) return true;
+            if (!t.dueDate) return true;
+            if (view === "today" && isToday(t.dueDate)) return false;
+            if (view === "overdue" && isPast(t.dueDate) && !isToday(t.dueDate)) return false;
+            if (view === "upcoming" && isFuture(t.dueDate) && !isToday(t.dueDate)) return false;
             return true;
-          }),
-        }));
+          });
+          return { tasks: remainingTasks };
+        });
       },
     }),
     {
@@ -177,6 +191,7 @@ export const useTasksStore = create<TasksState>()(
     }
   )
 );
+
 // --- Custom Hooks for View Layer Orchestration --- //
 
 export const useTodayTasks = () => {
@@ -188,12 +203,24 @@ export const useTodayTasks = () => {
   }, [tasks]);
 };
 
+export type GroupedOverdueTasks = Record<string, Task[]>;
+
+const formatOverdueCategory = (dateString: string) => {
+  const date = new Date(dateString);
+  const today = new Date();
+  const diffTime = Math.abs(today.getTime() - date.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return format(date, "EEEE"); // "Monday", "Tuesday"
+  return format(date, "MMM d, yyyy"); // "May 11, 2024"
+};
+
 export const useOverdueTasksGrouped = (): GroupedOverdueTasks => {
   const tasks = useTasksStore((state) => state.tasks);
   return useMemo(() => {
-    // FIX: Removed `!t.completed` filter. Overdue tasks now remain visible when completed.
     const overdue = tasks.filter(
-      (t) => t.dueDate && isPast(t.dueDate)
+      (t) => t.dueDate && isPast(t.dueDate) && !isToday(t.dueDate)
     );
 
     return overdue.reduce((groups: GroupedOverdueTasks, task) => {
@@ -209,11 +236,7 @@ export const useUpcomingTasks = () => {
   const tasks = useTasksStore((state) => state.tasks);
   return useMemo(() => {
     return tasks
-      // FIX: Removed `!t.completed` filter here as well.
-      .filter((t) => t.dueDate && isFuture(t.dueDate))
-      .sort(
-        (a, b) =>
-          new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
-      );
+      .filter((t) => t.dueDate && isFuture(t.dueDate) && !isToday(t.dueDate))
+      .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime());
   }, [tasks]);
 };

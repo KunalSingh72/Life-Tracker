@@ -12,7 +12,7 @@ interface NotesState {
   togglePin: (id: string) => void;
   changeColor: (id: string, color: NoteColor) => void;
   duplicateNote: (id: string) => void;
-
+  deleteNote: (id: string) => void;
   // Trash & Lifecycle Actions
   moveToTrash: (id: string) => void;
   restoreNote: (id: string) => void;
@@ -43,9 +43,10 @@ export const useNotesStore = create<NotesState>()(
           color: payload.color || "default",
           isPinned: false,
           status: "active",
-          deletedAt: null,
           createdAt: now,
           updatedAt: now,
+          deletedAt: null,
+          goalId: payload.goalId || null, 
         };
         set((state) => ({ notes: [newNote, ...state.notes] }));
         return id;
@@ -59,6 +60,11 @@ export const useNotesStore = create<NotesState>()(
         }));
       },
 
+      deleteNote: (id) => {
+        set((state) => ({
+          notes: state.notes.filter((note) => note.id !== id),
+        }));
+      },
       togglePin: (id) => {
         set((state) => ({
           notes: state.notes.map((note) =>
