@@ -56,7 +56,7 @@ export function MobileHeader() {
           ></div>
 
           {/* Drawer Content */}
-          <aside className="relative w-[280px] max-w-sm h-full bg-background-surface flex flex-col shadow-2xl animate-in slide-in-from-left-2 duration-200">
+          <aside className="relative w-70 max-w-sm h-full bg-background-surface flex flex-col shadow-2xl animate-in slide-in-from-left-2 duration-200">
             <div className="h-16 flex items-center justify-between px-6 border-b border-border-subtle">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-accent-primary grid place-items-center">

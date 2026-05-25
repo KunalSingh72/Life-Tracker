@@ -1,117 +1,121 @@
+
 life-tracker/
 │
 ├── apps/
-│ │
-│ └── web/
-│ │
-│ ├── public/
-│ │
-│ ├── src/
-│ │ │
-│ │ ├── app/
-│ │ │ │
-│ │ │ ├── providers/
-│ │ │ │ ├── AppProviders.tsx
-│ │ │ │ ├── QueryProvider.tsx
-│ │ │ │ ├── ThemeContext.tsx
-│ │ │ │ └── ThemeProvider.tsx
-│ │ │ │
-│ │ │ ├── router/
-│ │ │ │ └── routes.tsx
-│ │ │ │
-│ │ │ └── App.tsx
-│ │ │
-│ │ ├── components/
-│ │ │ │
-│ │ │ ├── layout/
-│ │ │ │ ├── Layout.tsx
-│ │ │ │
-│ │ │ └── ui/
-│ │ │
-│ │ ├── config/
-│ │ │
-│ │ ├── features/
-│ │ │ │
-│ │ │ ├── dashboard/
-│ │ │ │ └── DashboardPage.tsx
-│ │ │ │
-│ │ │ ├── tasks/
-│ │ │ │ └── TasksPage.tsx
-│ │ │ │  
-│ │ │ ├── notes/
-│ │ │ │ └── NotesPage.tsx
-│ │ │ │
-│ │ │ ├── goals/
-│ │ │ │ └── GoalsPage.tsx
-│ │ │ │
-│ │ │ ├── budget/
-│ │ │ │ └── BudgetPage.tsx
-│ │ │ │
-│ │ │ ├── health/
-│ │ │ │ └── HealthPage.tsx
-│ │ │ │
-│ │ │ └── settings/
-│ │ │ └── Settings.tsx
-│ │ │
-│ │ ├── hooks/
-│ │ │ └── useTheme.ts
-│ │ │
-│ │ ├── lib/
-│ │ │ ├── query-client.ts
-│ │ │ └── utils.ts
-│ │ │
-│ │ ├── services/
-│ │ │
-│ │ ├── stores/
-│ │ │ └── ui.store.ts
-│ │ │
-│ │ ├── types/
-│ │ │
-│ │ ├── index.css
-│ │ └── main.tsx
-│ │
-│ ├── index.html
-│ ├── vite.config.ts
-│ ├── package.json
-│ ├── tsconfig.app.json
-│ ├── tsconfig.node.json
-│ └── eslint.config.js
+│   │
+│   └── web/
+│       │
+│       ├── public/
+│       │
+│       ├── src/
+│       │   │
+│       │   ├── app/
+│       │   │   │
+│       │   │   ├── providers/
+│       │   │   │   ├── AppProviders.tsx
+│       │   │   │   ├── QueryProvider.tsx
+│       │   │   │   ├── ThemeContext.tsx
+│       │   │   │   └── ThemeProvider.tsx
+│       │   │   │
+│       │   │   ├── router/
+│       │   │   │   └── routes.tsx
+│       │   │   │
+│       │   │   └── App.tsx
+│       │   │
+│       │   ├── components/
+│       │   │   │
+│       │   │   ├── layout/
+│       │   │   │   ├── Layout.tsx
+│       │   │   │   ├── Sidebar.tsx
+│       │   │   │   ├── MobileHeader.tsx
+│       │   │   │
+│       │   │   └── ui/
+│       │   │
+│       │   ├── config/
+│       │   |   └── navigation.ts
+│       │   │
+│       │   ├── features/
+│       │   │   │
+│       │   │   ├── dashboard/
+│       │   │   │   └── DashboardPage.tsx
+│       │   │   │
+│       │   │   ├── tasks/
+│       │   │   │   └── TasksPage.tsx
+│       │   │   │
+│       │   │   ├── notes/
+│       │   │   │   └──NotesPage.tsx 
+│       │   │   │
+│       │   │   ├── goals/
+│       │   │   │   └── GoalsPage.tsx
+│       │   │   │
+│       │   │   ├── budget/
+│       │   │   │   └── BudgetPage.tsx
+│       │   │   │
+│       │   │   ├── health/
+│       │   │   │   └── HealthPage.tsx
+│       │   │   │
+│       │   │   └── settings/
+│       │   │       └── Settings.tsx
+│       │   │
+│       │   ├── hooks/
+│       │   │   └── useTheme.ts
+│       │   │
+│       │   ├── lib/
+│       │   │   ├── query-client.ts
+│       │   │   └── utils.ts
+│       │   │
+│       │   ├── services/
+│       │   │
+│       │   ├── stores/
+│       │   │   └── ui.store.ts
+│       │   │
+│       │   ├── types/
+│       │   │
+│       │   ├── index.css
+│       │   └── main.tsx
+│       │
+│       ├── index.html
+│       ├── vite.config.ts
+│       ├── package.json
+│       ├── tsconfig.app.json
+│       ├── tsconfig.node.json
+│       └── eslint.config.js
 │
 ├── packages/
-│ │
-│ ├── config/
-│ │ │
-│ │ ├── src/
-│ │ │ ├── app.config.ts
-│ │ │ └── index.ts
-│ │ │
-│ │ ├── package.json
-│ │ └── tsconfig.json
-│ │
-│ ├── types/
-│ │ │
-│ │ ├── src/
-│ │ │ └── index.ts
-│ │ │
-│ │ ├── package.json
-│ │ └── tsconfig.json
-│ │
-│ ├── utils/
-│ │ │
-│ │ ├── src/
-│ │ │ ├── date.utils.ts
-│ │ │ └── index.ts
-│ │ │
-│ │ ├── package.json
-│ │ └── tsconfig.json
-│ │
-│ └── validation/
-│ │
-│ ├── src/
-│ │ └── index.ts
-│ │
-│ ├── package.json
-│ └── tsconfig.json
+│   │
+│   ├── config/
+│   │   │
+│   │   ├── src/
+│   │   │   ├── app.config.ts
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── types/
+│   │   │
+│   │   ├── src/
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── utils/
+│   │   │
+│   │   ├── src/
+│   │   │   ├── date.utils.ts
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── validation/
+│       │
+│       ├── src/
+│       │   └── index.ts
+│       │
+│       ├── package.json
+│       └── tsconfig.json
 │
 ├── node_modules/
 │
@@ -130,11 +134,11 @@ import { router } from "./router/routes";
 import AppProviders from "./providers/AppProviders";
 
 export default function App() {
-return (
-<AppProviders>
-<RouterProvider router={router} />
-</AppProviders>
-);
+  return (
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
+  );
 }
 
 ---
@@ -151,42 +155,41 @@ import NotesPage from "@/features/notes/NotesPage";
 import Settings from "@/features/settings/Settings";
 
 export const router = createBrowserRouter([
-{
-path: "/",
-element: <Layout />,
-children: [
-{
-index: true,
-element: <DashboardPage />,
-},
-{
-path: "tasks",
-element: <TasksPage />,
-},
-{
-path: "goals",
-element: <GoalsPage />,
-},
-{
-path: "health",
-element: <HealthPage />,
-},
-{
-path: "budget",
-element: <BudgetPage />,
-},
-{
-path: "notes",
-element: <NotesPage />,
-},
-{
-path: "settings",
-element: <Settings />,
-},
-],
-},
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <DashboardPage />,
+      },
+      {
+        path: "tasks",
+        element: <TasksPage />,
+      },
+      {
+        path: "goals",
+        element: <GoalsPage />,
+      },
+      {
+        path: "health",
+        element: <HealthPage />,
+      },
+      {
+        path: "budget",
+        element: <BudgetPage />,
+      },
+      {
+        path: "notes",
+        element: <NotesPage />,
+      },
+      {
+        path: "settings",
+        element: <Settings />,
+      },
+    ],
+  },
 ]);
-
 ---
 
 AppProviders.tsx
@@ -195,17 +198,16 @@ import QueryProvider from "./QueryProvider";
 import { ThemeProvider } from "./ThemeProvider";
 
 interface Props {
-children: ReactNode;
+  children: ReactNode;
 }
 
 export default function AppProviders({ children }: Props) {
-return (
-<ThemeProvider>
-<QueryProvider>{children}</QueryProvider>
-</ThemeProvider>
-);
+  return (
+    <ThemeProvider>
+      <QueryProvider>{children}</QueryProvider>
+    </ThemeProvider>
+  );
 }
-
 ---
 
 QueryProvider.tsx
@@ -214,15 +216,14 @@ import type { ReactNode } from "react";
 import { queryClient } from "@/lib/query-client";
 
 interface Props {
-children: ReactNode;
+  children: ReactNode;
 }
 
 export default function QueryProvider({ children }: Props) {
-return (
-<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 }
-
 ---
 
 ThemeContext.tsx
@@ -231,14 +232,13 @@ import { createContext } from "react";
 export type Theme = "light" | "dark";
 
 export type ThemeContextType = {
-theme: Theme,
-toggleTheme: () => void,
+  theme: Theme,
+  toggleTheme: () => void,
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-undefined,
+export const ThemeContext =  createContext<ThemeContextType | undefined>(
+  undefined,
 )
-
 ---
 
 ThemeProvider.tsx
@@ -246,26 +246,25 @@ import { type ReactNode, useEffect, useState } from "react";
 import { ThemeContext, type Theme } from "./ThemeContext";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-const [theme, setTheme] = useState<Theme>(() => {
-return (localStorage.getItem("theme") as Theme) || "light";
-});
+  const [theme, setTheme] = useState<Theme>(() => {
+    return (localStorage.getItem("theme") as Theme) || "light";
+  });
 
-useEffect(() => {
-document.documentElement.setAttribute("data-theme", theme);
-localStorage.setItem("theme", theme);
-}, [theme]);
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-const toggleTheme = () => {
-setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-};
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
-return (
-<ThemeContext.Provider value={{ theme, toggleTheme }}>
-{children}
-</ThemeContext.Provider>
-);
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
-
 ---
 
 main.tsx
@@ -275,15 +274,13 @@ import App from './app/App.tsx'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
-<StrictMode>
-<App />
-</StrictMode>,
+  <StrictMode>
+    <App />
+  </StrictMode>,
 )
-
 ---
 
 index.html
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -297,9 +294,7 @@ index.html
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
 ---
-
 eslint.config.js
 import js from '@eslint/js'
 import globals from 'globals'
@@ -309,83 +304,94 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-globalIgnores(['dist']),
-{
-files: ['**/*.{ts,tsx}'],
-extends: [
-js.configs.recommended,
-tseslint.configs.recommended,
-reactHooks.configs.flat.recommended,
-reactRefresh.configs.vite,
-],
-languageOptions: {
-globals: globals.browser,
-},
-},
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
 ])
-
 ---
 
 package.json
 {
-"name": "life-tracker",
-"private": true,
-"version": "0.0.0",
-"type": "module",
-"scripts": {
-"dev": "vite",
-"build": "tsc -b && vite build",
-"lint": "eslint .",
-"lint:fix": "eslint . --fix",
-"preview": "vite preview"
-},
-"dependencies": {
-"@tailwindcss/vite": "^4.3.0",
-"@tiptap/pm": "^3.23.1",
-"@tiptap/react": "^3.23.1",
-"@tiptap/starter-kit": "^3.23.1",
-"lucide-react": "^1.14.0",
-"react": "^19.2.6",
-"react-dom": "^19.2.6",
-"react-router": "^7.15.0",
-"react-router-dom": "^7.15.0",
-"tailwindcss": "^4.3.0"
-},
-"devDependencies": {
-"@eslint/js": "^10.0.1",
-"@types/node": "^24.12.4",
-"@types/react": "^19.2.14",
-"@types/react-dom": "^19.2.3",
-"@vitejs/plugin-react": "^6.0.1",
-"eslint": "^10.3.0",
-"eslint-plugin-react-hooks": "^7.1.1",
-"eslint-plugin-react-refresh": "^0.5.2",
-"globals": "^17.6.0",
-"typescript": "~6.0.2",
-"typescript-eslint": "^8.59.2",
-"vite": "^8.0.12"
+  "name": "@life-tracker/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "@tiptap/pm": "^3.23.1",
+    "@tiptap/react": "^3.23.1",
+    "@tiptap/starter-kit": "^3.23.1",
+    "date-fns": "^4.2.1",
+    "lucide-react": "^1.14.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router": "^7.15.0",
+    "react-router-dom": "^7.15.0",
+    "tailwindcss": "^4.3.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.100.10",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "nanoid": "^5.1.11",
+    "react-hook-form": "^7.75.0",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^6.0.1"
+  }
 }
-}
-
 ---
 
 tsconfig.app.json
 {
-"compilerOptions": {
-"tsBuildInfoFile": "./node*modules/.tmp/tsconfig.app.tsbuildinfo",
-"target": "es2023",
-"lib": ["ES2023", "DOM"],
-"module": "esnext",
-"types": ["vite/client"],
-"skipLibCheck": true,
-"paths": {
-"@/*": ["./src/_"],
-"@life-tracker/types": ["../../packages/types/src"],
-"@life-tracker/utils": ["../../packages/utils/src"],
-"@life-tracker/validation": ["../../packages/validation/src"],
-"@life-tracker/config": ["../../packages/config/src"]
-},
-
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@life-tracker/types": ["../../packages/types/src"],
+      "@life-tracker/utils": ["../../packages/utils/src"],
+      "@life-tracker/validation": ["../../packages/validation/src"],
+      "@life-tracker/config": ["../../packages/config/src"]
+    },
+    
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -400,21 +406,21 @@ tsconfig.app.json
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
 
-},
-"include": ["src"]
+    
+  },
+  "include": ["src"]
 }
-
 ---
 
 tsconfig.node.json
 {
-"compilerOptions": {
-"tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-"target": "es2023",
-"lib": ["ES2023"],
-"module": "esnext",
-"types": ["node"],
-"skipLibCheck": true,
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -428,11 +434,9 @@ tsconfig.node.json
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
-
-},
-"include": ["vite.config.ts"]
+  },
+  "include": ["vite.config.ts"]
 }
-
 ---
 
 vite.config.ts
@@ -442,11 +446,11 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
-plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
 
-resolve: {
-alias: {
-"@": path.resolve(\_\_dirname, "./src"),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
 
       "@life-tracker/types": path.resolve(
         __dirname,
@@ -468,207 +472,170 @@ alias: {
         "../../packages/config/src"
       ),
     },
-
-},
+  },
 });
-
 ---
 
 tsconfig.json
 {
-"files": [],
-"references": [
-{ "path": "./tsconfig.app.json" },
-{ "path": "./tsconfig.node.json" }
-]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }
-
 ---
 
 life-tracker/package.json (root)
 {
-"name": "@life-tracker/web",
-"private": true,
-"packageManager": "pnpm@11.1.1",
-"scripts": {
-"dev": "turbo run dev",
-"build": "turbo run build",
-"lint": "turbo run lint"
-},
-"devDependencies": {
-"turbo": "^2.0.0"
-},
-"dependencies": {
-"@dnd-kit/core": "^6.3.1",
-"@dnd-kit/sortable": "^10.0.0",
-"@dnd-kit/utilities": "^3.2.2",
-"@hookform/resolvers": "^5.2.2",
-"@tanstack/react-query": "^5.100.10",
-"class-variance-authority": "^0.7.1",
-"clsx": "^2.1.1",
-"lucide-react": "^1.14.0",
-"nanoid": "^5.1.11",
-"react-hook-form": "^7.75.0",
-"tailwind-merge": "^3.6.0",
-"zod": "^4.4.3",
-"zustand": "^5.0.13"
+  "name": "life-tracker-monorepo",
+  "private": true,
+  "packageManager": "pnpm@11.1.1",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  }
 }
-}
-
 ---
 
 life-tracker/tsconfig.base.json (root)
 {
-"compilerOptions": {
-"target": "ES2023",
-"module": "ESNext",
-"moduleResolution": "Bundler",
-"strict": true,
-"jsx": "react-jsx",
-"skipLibCheck": true,
-"resolveJsonModule": true,
-"allowSyntheticDefaultImports": true,
-"esModuleInterop": true,
-"ignoreDeprecations": "6.0"
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "ignoreDeprecations": "6.0"
+  }
 }
-}
-
 ---
 
 life-tracker/turbo.json (root)
 {
-"$schema": "https://turbo.build/schema.json",
-"tasks": {
-"dev": {
-"cache": false,
-"persistent": true
-},
-"build": {
-"dependsOn": ["^build"],
-"outputs": ["dist/**"]
-},
-"lint": {}
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "lint": {}
+  }
 }
-}
-
 ---
 
 life-tracker/pnpm-workspace.yaml (root)
 packages:
-
-- "apps/\*"
-- "packages/\*"
-
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  esbuild: true
 ---
-
 life-tracker/packages/config/package.json
 {
-"name": "@life-tracker/config",
-"version": "1.0.0",
-"main": "src/index.ts"
+  "name": "@life-tracker/config",
+  "version": "1.0.0",
+  "main": "src/index.ts"
 }
-
 ---
-
 life-tracker/packages/config/tsconfig.json
 {
-"extends": "../../tsconfig.base.json",
-"compilerOptions": {
-"rootDir": "src",
-"outDir": "dist",
-"declaration": true,
-"declarationMap": true
-},
-"include": ["src"]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src"]
 }
-
 ---
 
 life-tracker/packages/config/src/app.config.ts
 export const APP_NAME = "LifeTracker";
-
 ---
 
 life-tracker/packages/config/src/index.ts
-export \* from "./app.config";
-
+export * from "./app.config";
 ---
 
 life-tracker/packages/types/package.json
 {
-"name": "@life-tracker/types",
-"version": "1.0.0",
-"main": "src/index.ts",
-"dependencies": {
-"zod": "^4.4.3",
-"@life-tracker/validation": "workspace:\*"
+  "name": "@life-tracker/types",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "zod": "^4.4.3",
+    "@life-tracker/validation": "workspace:*"
+  }
 }
-}
-
 ---
 
 life-tracker/packages/types/tsconfig.json
 {
-"extends": "../../tsconfig.base.json",
-"compilerOptions": {
-"rootDir": "src",
-"outDir": "dist",
-"declaration": true,
-"declarationMap": true
-},
-"include": ["src"]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src"]
 }
-
----
-
-life-tracker/packages/utils/src/index.ts
-export \* from "./date.utils";
-
 ---
 
 life-tracker/packages/utils/package.json
 {
-"name": "@life-tracker/utils",
-"version": "1.0.0",
-"main": "src/index.ts"
+  "name": "@life-tracker/utils",
+  "version": "1.0.0",
+  "main": "src/index.ts"
 }
-
 ---
 
 life-tracker/packages/utils/tsconfig.json
 {
-"extends": "../../tsconfig.base.json",
-"compilerOptions": {
-"rootDir": "src",
-"outDir": "dist",
-"declaration": true,
-"declarationMap": true
-},
-"include": ["src"]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src"]
 }
-
 ---
 
 life-tracker/packages/validation/package.json
 {
-"name": "@life-tracker/validation",
-"version": "1.0.0",
-"main": "src/index.ts",
-"dependencies": {
-"zod": "^4.4.3"
+  "name": "@life-tracker/validation",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
 }
-}
-
 ---
 
 life-tracker/packages/validation/tsconfig.json
 {
-"extends": "../../tsconfig.base.json",
-"compilerOptions": {
-"rootDir": "src",
-"outDir": "dist",
-"declaration": true,
-"declarationMap": true
-},
-"include": ["src"]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src"]
 }
