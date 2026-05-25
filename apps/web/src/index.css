@@ -1,151 +1,51 @@
 @import "tailwindcss";
+
 @theme {
-  --color-bg-main: var(--theme-bg-main);
-  --color-bg-card: var(--theme-bg-card);
-  --color-bg-sidebar: var(--theme-bg-sidebar);
-
-  --color-text-primary: var(--theme-text-primary);
-  --color-text-secondary: var(--theme-text-secondary);
-
-  --color-border: var(--theme-border);
-
-  --color-primary: var(--theme-primary);
-  --color-primary-foreground: var(--theme-primary-foreground);
+  --color-background-main: var(--bg-main);
+  --color-background-surface: var(--bg-surface);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  
+  --color-border-subtle: var(--border-subtle);
+  
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-subtle: var(--accent-subtle);
 }
 
 @layer base {
-  :root,
-  [data-theme="light"] {
-    --theme-bg-main: #F0F2F5;
-    --theme-bg-card: #FFFFFF;
-    --theme-bg-sidebar: #FFFFFF;
-    --theme-text-primary: #1A1D1F;
-    --theme-text-secondary: #6F767E;
-    --theme-border: #E6E8EC;
-    --theme-primary: #8A2BE2;
-    --theme-primary-foreground: #FFFFFF;
+  :root {
+    /* Light Theme - Black & White Backgrounds */
+    --bg-main: #f5f5f5;
+    --bg-surface: #ffffff;
+
+    --text-primary: #111111;
+    --text-secondary: #6b7280;
+
+    --border-subtle: #e5e7eb;
+
+    /* Purple Accent */
+    --accent-primary: #7c3aed; /* Violet 600 */
+    --accent-subtle: #f3e8ff;  /* Violet 100 */
   }
 
-  [data-theme="dark"] {
-    --theme-bg-main: #1A1D1F;
-    --theme-bg-card: #111315;
-    --theme-bg-sidebar: #111315;
-    --theme-text-primary: #FCFCFC;
-    --theme-text-secondary: #8F959E;
-    --theme-border: #2A2D31;
-    --theme-primary: #A665FF;
-    --theme-primary-foreground: #1A1D1F;
+  :root[data-theme="dark"] {
+    /* Dark Theme - Black & White Backgrounds */
+    --bg-main: #0f0f0f;
+    --bg-surface: #181818;
+
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+
+    --border-subtle: #2a2a2a;
+
+    /* Purple Accent */
+    --accent-primary: #a78bfa; /* Violet 400 */
+    --accent-subtle: rgba(124, 58, 237, 0.15);
   }
 
   body {
-    background-color: var(--theme-bg-main);
-    color: var(--theme-text-primary);
-    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  }
-
-  /* Global Custom Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background-color: var(--theme-border);
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--theme-text-secondary);
-  }
-}
-@layer components {
-  /* Rich Text Editor Styling */
-  .rich-editor {
-    outline: none;
-    min-height: 500px;
-  }
-  
-  .rich-editor h3 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-    color: var(--theme-text-primary);
-  }
-  
-  .rich-editor ul {
-    list-style-type: disc;
-    padding-left: 1.5rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .rich-editor li {
-    margin-bottom: 0.25rem;
-  }
-  
-  .rich-editor p {
-    margin-bottom: 0.5rem;
-  }
-  /* Tiptap Editor Base Styling */
-  .ProseMirror {
-    outline: none;
-    min-height: 500px;
-  }
-  
-  .ProseMirror p.is-editor-empty:first-child::before {
-    content: attr(data-placeholder);
-    float: left;
-    color: var(--theme-text-secondary);
-    pointer-events: none;
-    height: 0;
-    opacity: 0.5;
-  }
-
-  .ProseMirror h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-    line-height: 1.2;
-    color: var(--theme-text-primary);
-  }
-
-  .ProseMirror h3 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-top: 1.25rem;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-    color: var(--theme-text-primary);
-  }
-  
-  .ProseMirror ul {
-    list-style-type: disc;
-    padding-left: 1.5rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .ProseMirror ol {
-    list-style-type: decimal;
-    padding-left: 1.5rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .ProseMirror li {
-    margin-bottom: 0.25rem;
-  }
-  
-  .ProseMirror p {
-    margin-bottom: 0.75rem;
-  }
-
-  .ProseMirror s {
-    text-decoration-line: line-through;
-    opacity: 0.7;
+    @apply bg-background-main text-text-primary antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   }
 }

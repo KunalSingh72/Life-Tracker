@@ -1,89 +1,92 @@
-import { NavLink } from "react-router-dom";
-import {
-  LayoutGrid,
-  ClipboardList,
-  MessageSquareText,
-  Goal,
-  Landmark,
-  HandHeart,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { NavLink } from "react-router";
+import { Settings, Moon, Sun, LogOut } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
+import { NAVIGATION_LINKS } from "@/config/navigation";
 
-
-const Logo = () => (
-  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 p-1.5 shadow-md">
-    <div className="relative h-full w-full">
-      <div className="absolute left-0 top-0 h-4 w-4 rounded-full bg-cyan-400 opacity-80" />
-      <div className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-pink-400 opacity-80" />
-    </div>
-  </div>
-);
-
-const navItemsUpper = [
-  { name: "Dashboard", path: "/", icon: LayoutGrid },
-  { name: "To-Do", path: "/tasks", icon: ClipboardList },
-  { name: "Notes", path: "/notes", icon: MessageSquareText },
-  { name: "Goals", path: "/goals", icon: Goal },
-  { name: "Budget Tracker", path: "/budget", icon: Landmark },
-  { name: "Calories", path: "/health", icon: HandHeart },
-];
-
-const navItemsLower = [
-  { name: "Settings", path: "/settings", icon: Settings },
-  { name: "Sign Out", path: "/signout", icon: LogOut },
-];
-
-export default function Sidebar() {
-  const activeClass =
-    "flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-primary text-primary-foreground shadow-inner";
-  const inactiveClass =
-    "flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-main/50 transition-all";
+export function Sidebar() {
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <aside className="flex h-screen w-65 flex-col border-r border-border bg-bg-sidebar p-6">
-      {/* Branding */}
-      <div className="flex items-center gap-3.5 pb-10">
-        <Logo />
-        <span className="text-xl font-bold text-text-primary tracking-tight">
-          LifeTracker
-        </span>
+    <aside className="w-70 shrink-0 bg-background-surface flex-col transition-colors duration-200 hidden md:flex border-r border-border-subtle">
+      {/* Branding Area */}
+      <div className="h-24 flex items-center px-8">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-accent-primary grid place-items-center">
+            <div className="w-3 h-3 bg-background-surface rounded-sm"></div>
+          </div>
+          <span className="text-xl font-bold text-text-primary">Business</span>
+        </div>
       </div>
-      
 
-      {/* Upper Navigation */}
-      <nav className="flex-1 space-y-2">
-        {navItemsUpper.map((item) => (
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-2 px-6 space-y-2">
+        {NAVIGATION_LINKS.map((item) => (
           <NavLink
-            key={item.path}
-            to={item.path}
+            key={item.name}
+            to={item.href}
             className={({ isActive }) =>
-              isActive ? activeClass : inactiveClass
+              `flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-accent-subtle text-accent-primary"
+                  : "text-text-secondary hover:bg-background-main hover:text-text-primary"
+              }`
             }
           >
-            <item.icon className="h-5 w-5" />
-            {item.name}
+            {({ isActive }) => (
+              <>
+                <item.icon
+                  className={`w-5 h-5 transition-colors ${
+                    isActive ? "text-accent-primary" : "text-text-secondary"
+                  }`}
+                />
+                {item.name}
+              </>
+            )}
           </NavLink>
         ))}
-
-        <div className="py-4 border-b border-border" />
-
-        {/* Lower Navigation (Settings/Logout) */}
-        <div className="pt-4 space-y-2">
-          {navItemsLower.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                isActive ? activeClass : inactiveClass
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </NavLink>
-          ))}
-        </div>
       </nav>
+
+      {/* Bottom Actions */}
+      <div className="p-6 space-y-2">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+              isActive
+                ? "bg-accent-subtle text-accent-primary"
+                : "text-text-secondary hover:bg-background-main hover:text-text-primary"
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <Settings
+                className={`w-5 h-5 transition-colors ${
+                  isActive ? "text-accent-primary" : "text-text-secondary"
+                }`}
+              />
+              Settings
+            </>
+          )}
+        </NavLink>
+
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-background-main hover:text-text-primary transition-all text-left cursor-pointer"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-5 h-5" />
+          ) : (
+            <Moon className="w-5 h-5" />
+          )}
+          Theme
+        </button>
+
+        <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-background-main hover:text-text-primary transition-all text-left cursor-pointer mt-4">
+          <LogOut className="w-5 h-5" />
+          Sign Out
+        </button>
+      </div>
     </aside>
   );
 }

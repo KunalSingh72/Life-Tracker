@@ -1,28 +1,19 @@
-import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import Topbar from "./Topbar";
-import ScheduleModal from "@/features/tasks/components/ScheduleModal";
+import { Outlet } from "react-router";
+import { Sidebar } from "./Sidebar";
+import { MobileHeader } from "./MobileHeader";
 
-function Layout() {
+export default function Layout() {
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-main text-text-primary">
-      {/* Side Navigations - Fixed width, full height */}
+    <div className="flex h-screen overflow-hidden bg-background-main text-text-primary">
       <Sidebar />
-
-      {/* Main Content Container - column layout */}
-      <div className="flex-1 flex flex-col h-full relative">
-        <Topbar />
-
-        {/* Dynamic Page View - Scrollable vertical area */}
-        <main className="flex-1 overflow-y-auto p-8 relative">
-          <Outlet />
-        </main>
-      </div>
-
-      {/* Global Modals */}
-      <ScheduleModal />
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
+        <MobileHeader />
+        <div className="flex-1 overflow-y-auto p-6 md:p-10">
+          <div className="max-w-7xl mx-auto h-full">
+            <Outlet />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
-
-export default Layout;
