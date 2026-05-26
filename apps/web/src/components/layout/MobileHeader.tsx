@@ -4,7 +4,7 @@ import { Menu, X, Moon, Sun, Settings, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { NAVIGATION_LINKS } from "@/config/navigation";
 
-export function MobileHeader() {
+export default function MobileHeader() {
   const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 

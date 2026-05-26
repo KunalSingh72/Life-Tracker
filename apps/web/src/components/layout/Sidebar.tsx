@@ -3,7 +3,7 @@ import { Settings, Moon, Sun, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { NAVIGATION_LINKS } from "@/config/navigation";
 
-export function Sidebar() {
+export default function Sidebar() {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -14,7 +14,7 @@ export function Sidebar() {
           <div className="w-6 h-6 rounded bg-accent-primary grid place-items-center">
             <div className="w-3 h-3 bg-background-surface rounded-sm"></div>
           </div>
-          <span className="text-xl font-bold text-text-primary">Business</span>
+          <span className="text-3xl font-bold text-text-primary">Pluto</span>
         </div>
       </div>
 
