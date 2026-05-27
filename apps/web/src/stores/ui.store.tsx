@@ -1,20 +1,16 @@
 import { create } from "zustand";
 
-interface UIStore {
-  sidebarOpen: boolean;
-  toggleSidebar: () => void;
-  isScheduleModalOpen: boolean;
-  openScheduleModal: () => void;
-  closeScheduleModal: () => void;
+interface UiState {
+  isMobileMenuOpen: boolean;
+  openMobileMenu: () => void;
+  closeMobileMenu: () => void;
+  toggleMobileMenu: () => void;
 }
 
-export const useUIStore = create<UIStore>((set) => ({
-  sidebarOpen: true,
-  toggleSidebar: () =>
-    set((state) => ({
-      sidebarOpen: !state.sidebarOpen,
-    })),
-  isScheduleModalOpen: false,
-  openScheduleModal: () => set({ isScheduleModalOpen: true }),
-  closeScheduleModal: () => set({ isScheduleModalOpen: false }),
+export const useUiStore = create<UiState>((set) => ({
+  isMobileMenuOpen: false,
+  openMobileMenu: () => set({ isMobileMenuOpen: true }),
+  closeMobileMenu: () => set({ isMobileMenuOpen: false }),
+  toggleMobileMenu: () =>
+    set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
 }));
