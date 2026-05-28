@@ -13,4 +13,6 @@ export interface Task {
   priority: Priority;
   dueDate?: string;
   subtasks: Subtask[];
+  createdAt: string; 
+  deletedAt?: string; 
 }

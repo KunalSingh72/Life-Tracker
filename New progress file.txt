@@ -44,8 +44,11 @@ life-tracker/
 │       │   │   │   └── DashboardPage.tsx
 │       │   │   │
 │       │   │   ├── tasks/
-│       │   │   |   └── components/
-│       │   │   │           └── TaskSidebar.tsx
+│       │   │   |   ├── components/
+│       │   │   │   │   ├── TaskDetails.tsx
+│       │   │   │   │   ├── TaskInput.tsx
+│       │   │   │   │   ├── TaskMenu.tsx
+│       │       │   │   └── TaskItem.tsx
 │       │   │   │   └── TasksPage.tsx
 │       │   │   │
 │       │   │   ├── notes/
@@ -892,37 +895,113 @@ export const NAVIGATION_LINKS = [
 -----
 TasksPage.tsx
 import { useState, useRef, useEffect } from "react";
-import { CheckCircle2, Circle, Flag, ListTodo, Menu } from "lucide-react";
+import { Menu, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  startOfDay,
+  endOfDay,
+  isSameDay,
+  isBefore,
+  isAfter,
+  parseISO,
+  differenceInDays,
+  isToday,
+  isYesterday,
+  isTomorrow,
+  format,
+  compareDesc,
+  compareAsc,
+} from "date-fns";
+import {
+  CalendarDays,
+  CalendarRange,
+  AlertCircle,
+  CheckSquare,
+  Trash2,
+} from "lucide-react";
 import type { Task, Priority } from "@life-tracker/types";
+
 import { TaskSidebar } from "./components/TaskSidebar";
+import { TaskInput } from "./components/TaskInput";
+import { TaskMenu, type TaskView } from "./components/TaskMenu";
+import { TaskItem } from "./components/TaskItem";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Select } from "@/components/ui/Select";
 import { useUiStore } from "@/stores/ui.store";
 
 const STORAGE_KEY = "life-tracker-tasks";
 
+const getMobileMenuOptions = (counts: {
+  today: number;
+  upcoming: number;
+  overdue: number;
+  completed: number;
+}) => [
+  {
+    value: "today",
+    label: `Today ${counts.today}`,
+    icon: <CalendarDays className="w-4 h-4" />,
+  },
+  {
+    value: "upcoming",
+    label: `Upcoming ${counts.upcoming}`,
+    icon: <CalendarRange className="w-4 h-4 text-accent-primary" />,
+  },
+  {
+    value: "overdue",
+    label: `Overdue ${counts.overdue}`,
+    icon: <AlertCircle className="w-4 h-4 text-red-500" />,
+  },
+  {
+    value: "completed",
+    label: `Completed ${counts.completed}`,
+    icon: <CheckSquare className="w-4 h-4" />,
+  },
+  { value: "trash", label: "Trash Bin", icon: <Trash2 className="w-4 h-4" /> },
+];
+
 export default function TasksPage() {
   const { openMobileMenu } = useUiStore();
+
+  const [activeView, setActiveView] = useState<TaskView>("today");
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const savedTasks = localStorage.getItem(STORAGE_KEY);
       if (savedTasks) {
         const parsed = JSON.parse(savedTasks);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          const now = new Date();
+          return parsed
+            .map((t) => {
+              const createdAt = t.createdAt || now.toISOString();
+              return {
+                ...t,
+                createdAt,
+                dueDate: t.dueDate || format(parseISO(createdAt), "yyyy-MM-dd"),
+              };
+            })
+            .filter((t) => {
+              if (t.deletedAt)
+                return differenceInDays(now, parseISO(t.deletedAt)) < 7;
+              return true;
+            });
+        }
       }
       return [];
     } catch (error) {
-      console.error("Failed to parse tasks from local storage", error);
+      console.error("Failed to parse tasks", error);
       return [];
     }
   });
-
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -941,6 +1020,87 @@ export default function TasksPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // --- Date Math & Filtering Logic ---
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const todayEnd = endOfDay(now);
+
+  let todayCount = 0;
+  let upcomingCount = 0;
+  let overdueCount = 0;
+  let completedCount = 0;
+
+  tasks.forEach((task) => {
+    if (task.deletedAt) return;
+    if (task.completed) {
+      completedCount++;
+      return;
+    }
+    const effectiveDate = task.dueDate
+      ? parseISO(task.dueDate)
+      : parseISO(task.createdAt);
+
+    if (isSameDay(effectiveDate, now)) todayCount++;
+    else if (isBefore(effectiveDate, todayStart)) overdueCount++;
+    else if (isAfter(effectiveDate, todayEnd)) upcomingCount++;
+  });
+
+  const displayedTasks = tasks.filter((task) => {
+    if (activeView === "trash") return !!task.deletedAt;
+    if (task.deletedAt) return false;
+
+    const effectiveDate = task.dueDate
+      ? parseISO(task.dueDate)
+      : parseISO(task.createdAt);
+
+    if (activeView === "today")
+      return !task.completed && isSameDay(effectiveDate, now);
+    if (activeView === "upcoming")
+      return !task.completed && isAfter(effectiveDate, todayEnd);
+    if (activeView === "completed") return task.completed;
+    if (activeView === "overdue")
+      return !task.completed && isBefore(effectiveDate, todayStart);
+
+    return false;
+  });
+
+  const areAllDisplayedCompleted =
+    displayedTasks.length > 0 && displayedTasks.every((t) => t.completed);
+
+  // Group by effective date (so future dates properly map to "Tomorrow" etc.)
+  const groupedTasks = displayedTasks.reduce(
+    (acc, task) => {
+      const effectiveDate = task.dueDate
+        ? parseISO(task.dueDate)
+        : parseISO(task.createdAt);
+      let label = format(effectiveDate, "d MMM yyyy");
+
+      if (isToday(effectiveDate)) label = "Today";
+      else if (isYesterday(effectiveDate)) label = "Yesterday";
+      else if (isTomorrow(effectiveDate)) label = "Tomorrow";
+
+      if (!acc[label]) acc[label] = { label, date: effectiveDate, tasks: [] };
+      acc[label].tasks.push(task);
+      return acc;
+    },
+    {} as Record<string, { label: string; date: Date; tasks: Task[] }>,
+  );
+
+  // Upcoming sorts ascending (Tomorrow -> Next Week). Overdue/Completed sort descending (Yesterday -> Last Month)
+  const sortedGroups = Object.values(groupedTasks).sort((a, b) =>
+    activeView === "upcoming"
+      ? compareAsc(a.date, b.date)
+      : compareDesc(a.date, b.date),
+  );
+
+  const toggleGroup = (label: string) => {
+    const next = new Set(collapsedGroups);
+    if (next.has(label)) next.delete(label);
+    else next.add(label);
+    setCollapsedGroups(next);
+  };
+
+  // --- Actions ---
   const handleAddTask = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!newTaskTitle.trim()) return;
@@ -950,7 +1110,10 @@ export default function TasksPage() {
       completed: false,
       priority: "none",
       subtasks: [],
+      createdAt: new Date().toISOString(),
+      dueDate: format(new Date(), "yyyy-MM-dd"),
     };
+    if (activeView !== "today") setActiveView("today");
     setTasks([newTask, ...tasks]);
     setNewTaskTitle("");
   };
@@ -977,6 +1140,365 @@ export default function TasksPage() {
     setActiveDropdown(null);
   };
 
+  const handleDeleteTask = (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    if (task?.deletedAt) setTasks(tasks.filter((t) => t.id !== id));
+    else
+      setTasks(
+        tasks.map((t) =>
+          t.id === id ? { ...t, deletedAt: new Date().toISOString() } : t,
+        ),
+      );
+    if (selectedTaskId === id) setSelectedTaskId(null);
+  };
+
+  const handleRestoreTask = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTasks(
+      tasks.map((t) => (t.id === id ? { ...t, deletedAt: undefined } : t)),
+    );
+    if (selectedTaskId === id) setSelectedTaskId(null);
+  };
+
+  const handleHardDeleteSingle = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTasks(tasks.filter((t) => t.id !== id));
+    if (selectedTaskId === id) setSelectedTaskId(null);
+  };
+
+  const handleDeleteAllDisplayed = () => {
+    if (activeView === "trash") {
+      const displayedIds = displayedTasks.map((t) => t.id);
+      setTasks(tasks.filter((t) => !displayedIds.includes(t.id)));
+    } else {
+      const nowStr = new Date().toISOString();
+      const displayedIds = displayedTasks.map((t) => t.id);
+      setTasks(
+        tasks.map((t) =>
+          displayedIds.includes(t.id) ? { ...t, deletedAt: nowStr } : t,
+        ),
+      );
+    }
+    setSelectedTaskId(null);
+  };
+
+  const toggleAllDisplayedTasks = () => {
+    const displayedIds = displayedTasks.map((t) => t.id);
+    setTasks(
+      tasks.map((t) =>
+        displayedIds.includes(t.id)
+          ? { ...t, completed: !areAllDisplayedCompleted }
+          : t,
+      ),
+    );
+  };
+
+  return (
+    <div className="flex h-full w-full absolute inset-0 z-20 bg-background-surface md:static md:bg-transparent overflow-hidden">
+      <div className="flex-1 flex flex-col h-full min-w-0 transition-all duration-300">
+        <div className="flex flex-col h-full max-w-5xl w-full mx-auto relative pb-2 md:pb-0 px-0 md:px-8">
+          {/* Mobile Header */}
+          <div className="md:hidden flex flex-col px-4 pt-2 pb-2 border-b border-border-subtle shrink-0 bg-background-surface">
+            <div className="flex items-center justify-between h-14">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={openMobileMenu}
+                  className="p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+                <span className="text-2xl font-extrabold bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent">
+                  TODO
+                </span>
+              </div>
+              <div className="w-40">
+                <Select
+                  value={activeView}
+                  onChange={(val) => setActiveView(val as TaskView)}
+                  options={getMobileMenuOptions({
+                    today: todayCount,
+                    upcoming: upcomingCount,
+                    overdue: overdueCount,
+                    completed: completedCount,
+                  })}
+                  align="right"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Title */}
+          <div className="hidden md:flex pt-8 pb-6 flex-col shrink-0">
+            <h1 className="text-4xl font-extrabold tracking-tight">
+              <span className="bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent bg-size-[200%_auto] animate-gradient">
+                TODO
+              </span>
+            </h1>
+          </div>
+
+          {/* Desktop Split Layout */}
+          <div className="flex flex-1 overflow-hidden md:gap-8">
+            <TaskMenu
+              activeView={activeView}
+              setActiveView={setActiveView}
+              counts={{
+                today: todayCount,
+                upcoming: upcomingCount,
+                overdue: overdueCount,
+                completed: completedCount,
+              }}
+            />
+
+            {/* Right Main Area */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:mb-8">
+              {activeView !== "trash" && (
+                <div className="hidden md:block w-full mb-6 shrink-0">
+                  <TaskInput
+                    value={newTaskTitle}
+                    onChange={setNewTaskTitle}
+                    onSubmit={handleAddTask}
+                  />
+                </div>
+              )}
+
+              {/* Task Block */}
+              <div className="flex-1 flex flex-col min-w-0 md:bg-background-surface md:border border-border-subtle md:rounded-2xl md:shadow-sm overflow-hidden">
+                {/* Container Actions */}
+                <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border-subtle bg-background-main/30 shrink-0">
+                  {activeView === "trash" ? (
+                    <span className="text-sm font-medium text-text-secondary">
+                      Trash empties after 7 days
+                    </span>
+                  ) : (
+                    <button
+                      onClick={toggleAllDisplayedTasks}
+                      disabled={displayedTasks.length === 0}
+                      className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {areAllDisplayedCompleted
+                        ? "Mark all undone"
+                        : "Mark all done"}
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setIsDeleteAllModalOpen(true)}
+                    disabled={displayedTasks.length === 0}
+                    className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {activeView === "trash"
+                      ? "Empty Trash"
+                      : "Delete Displayed"}
+                  </button>
+                </div>
+
+                {/* Lists Rendering Area */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  {displayedTasks.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-text-secondary text-sm">
+                      No tasks found in {activeView}.
+                    </div>
+                  ) : (
+                    <>
+                      {/* Render Flat List for Today and Trash */}
+                      {(activeView === "today" || activeView === "trash") && (
+                        <div className="space-y-2">
+                          {displayedTasks.map((task) => (
+                            <TaskItem
+                              key={task.id}
+                              task={task}
+                              activeView={activeView}
+                              isSelected={selectedTaskId === task.id}
+                              onSelect={setSelectedTaskId}
+                              onToggleCompletion={toggleTaskCompletion}
+                              onUpdatePriority={updatePriority}
+                              onRestore={handleRestoreTask}
+                              onHardDelete={handleHardDeleteSingle}
+                              activeDropdown={activeDropdown}
+                              setActiveDropdown={setActiveDropdown}
+                              dropdownRef={dropdownRef}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Render Grouped List for Upcoming, Overdue, and Completed */}
+                      {(activeView === "upcoming" ||
+                        activeView === "overdue" ||
+                        activeView === "completed") && (
+                        <div className="space-y-6">
+                          {sortedGroups.map((group) => (
+                            <div key={group.label} className="flex flex-col">
+                              <button
+                                onClick={() => toggleGroup(group.label)}
+                                className="flex items-center gap-2 text-left font-semibold text-text-primary mb-3 cursor-pointer hover:opacity-80 transition-opacity"
+                              >
+                                {collapsedGroups.has(group.label) ? (
+                                  <ChevronRight className="w-5 h-5 text-text-secondary" />
+                                ) : (
+                                  <ChevronDown className="w-5 h-5 text-text-secondary" />
+                                )}
+                                {group.label}
+                                <span className="text-xs text-text-secondary font-medium ml-1 bg-background-main border border-border-subtle px-2 py-0.5 rounded-full">
+                                  {group.tasks.length}
+                                </span>
+                              </button>
+
+                              <div
+                                className={`space-y-2 pl-1 transition-all duration-200 overflow-hidden ${collapsedGroups.has(group.label) ? "h-0 opacity-0" : "h-auto opacity-100"}`}
+                              >
+                                {group.tasks.map((task) => (
+                                  <TaskItem
+                                    key={task.id}
+                                    task={task}
+                                    activeView={activeView}
+                                    isSelected={selectedTaskId === task.id}
+                                    onSelect={setSelectedTaskId}
+                                    onToggleCompletion={toggleTaskCompletion}
+                                    onUpdatePriority={updatePriority}
+                                    onRestore={handleRestoreTask}
+                                    onHardDelete={handleHardDeleteSingle}
+                                    activeDropdown={activeDropdown}
+                                    setActiveDropdown={setActiveDropdown}
+                                    dropdownRef={dropdownRef}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {activeView !== "trash" && (
+            <div className="md:hidden shrink-0 border-t border-border-subtle bg-background-surface px-4 pt-4 pb-8 shadow-[0_-8px_20px_rgba(0,0,0,0.08)]">
+              <TaskInput
+                value={newTaskTitle}
+                onChange={setNewTaskTitle}
+                onSubmit={handleAddTask}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <TaskSidebar
+        task={tasks.find((t) => t.id === selectedTaskId) || null}
+        isOpen={!!selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+        onUpdate={updateTask}
+        onDelete={handleDeleteTask}
+        onDuplicate={(task) =>
+          setTasks([
+            {
+              ...task,
+              id: crypto.randomUUID(),
+              title: `${task.title} (Copy)`,
+              createdAt: new Date().toISOString(),
+              dueDate: format(new Date(), "yyyy-MM-dd"),
+            },
+            ...tasks,
+          ])
+        }
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onConfirm={handleDeleteAllDisplayed}
+        title={activeView === "trash" ? "Empty Trash" : "Delete Tasks"}
+        message={
+          activeView === "trash"
+            ? "Are you sure you want to permanently delete all items in the trash? This cannot be undone."
+            : `Are you sure you want to move all tasks currently displayed in the '${activeView}' view to the trash?`
+        }
+        confirmText={activeView === "trash" ? "Empty Trash" : "Delete Tasks"}
+        isDanger={true}
+      />
+    </div>
+  );
+}
+-----------
+TaskInput.tsx
+interface TaskInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (e?: React.FormEvent) => void;
+}
+
+export function TaskInput({ value, onChange, onSubmit }: TaskInputProps) {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="w-full relative flex items-center group"
+    >
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Add a new task..."
+        className="w-full bg-background-main md:bg-background-surface border border-border-subtle rounded-xl md:rounded-2xl py-3 md:py-4 pl-4 md:pl-6 pr-20 md:pr-24 text-text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent-primary/50 transition-all text-sm md:text-base"
+      />
+      <button
+        type="submit"
+        disabled={!value.trim()}
+        className="absolute right-2 md:right-2 bg-accent-primary text-white font-medium py-1.5 md:py-2 px-4 md:px-6 rounded-lg md:rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2 text-sm md:text-base"
+      >
+        Add
+      </button>
+    </form>
+  );
+}
+--------------
+TaskItem.tsx
+import type { RefObject } from "react";
+import {
+  CheckCircle2,
+  Circle,
+  Flag,
+  ListTodo,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
+import type { Task, Priority } from "@life-tracker/types";
+import type { TaskView } from "./TaskMenu";
+
+interface TaskItemProps {
+  task: Task;
+  activeView: TaskView;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+  onToggleCompletion: (id: string, e: React.MouseEvent) => void;
+  onUpdatePriority: (
+    id: string,
+    priority: Priority,
+    e: React.MouseEvent,
+  ) => void;
+  onRestore: (id: string, e: React.MouseEvent) => void;
+  onHardDelete: (id: string, e: React.MouseEvent) => void;
+  activeDropdown: string | null;
+  setActiveDropdown: (id: string | null) => void;
+  dropdownRef: RefObject<HTMLDivElement | null>;
+}
+
+export function TaskItem({
+  task,
+  activeView,
+  isSelected,
+  onSelect,
+  onToggleCompletion,
+  onUpdatePriority,
+  onRestore,
+  onHardDelete,
+  activeDropdown,
+  setActiveDropdown,
+  dropdownRef,
+}: TaskItemProps) {
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
       case "high":
@@ -990,242 +1512,223 @@ export default function TasksPage() {
     }
   };
 
-  const areAllTasksCompleted =
-    tasks.length > 0 && tasks.every((t) => t.completed);
-  const toggleAllTasks = () =>
-    setTasks(tasks.map((t) => ({ ...t, completed: !areAllTasksCompleted })));
-
-  const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
-
-  const taskInputForm = (
-    <form
-      onSubmit={handleAddTask}
-      className="w-full relative flex items-center group"
-    >
-      <input
-        type="text"
-        value={newTaskTitle}
-        onChange={(e) => setNewTaskTitle(e.target.value)}
-        placeholder="Add a task..."
-        className="w-full bg-background-main md:bg-background-surface border border-border-subtle rounded-xl md:rounded-2xl py-3 md:py-4 pl-4 md:pl-6 pr-20 md:pr-24 text-text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 transition-all text-sm md:text-base"
-      />
-      <button
-        type="submit"
-        disabled={!newTaskTitle.trim()}
-        className="absolute right-2 md:right-2 bg-accent-primary text-white font-medium py-1.5 md:py-2 px-4 md:px-6 rounded-lg md:rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2 text-sm md:text-base"
-      >
-        Add
-      </button>
-    </form>
-  );
-
   return (
-    <div className="flex h-full w-full absolute inset-0 z-20 bg-background-surface md:static md:bg-transparent overflow-hidden">
-      {/* Left: Main Task List Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0 transition-all duration-300">
-        <div className="flex flex-col h-full max-w-4xl w-full mx-auto relative pb-2 md:pb-0 px-0 md:px-8">
-          {/* Mobile-Only Header */}
-          <div className="md:hidden flex items-center justify-between px-4 h-16 border-b border-border-subtle shrink-0">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={openMobileMenu}
-                className="p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <span className="text-2xl font-extrabold bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent">
-                TODO
+    <div
+      onClick={() => onSelect(task.id)}
+      className={`group flex items-center justify-between p-3 md:p-4 rounded-xl border transition-all cursor-pointer ${
+        isSelected
+          ? "border-accent-primary bg-accent-subtle/30"
+          : "border-border-subtle hover:border-text-secondary/30 md:hover:bg-background-main"
+      }`}
+    >
+      <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+        {activeView === "trash" ? (
+          <div className="p-2 -ml-2 shrink-0 opacity-50">
+            {task.completed ? (
+              <CheckCircle2 className="w-6 h-6 text-accent-primary" />
+            ) : (
+              <Circle className="w-6 h-6 text-text-secondary" />
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={(e) => onToggleCompletion(task.id, e)}
+            className="p-2 -ml-2 shrink-0 cursor-pointer"
+          >
+            {task.completed ? (
+              <CheckCircle2 className="w-6 h-6 text-accent-primary" />
+            ) : (
+              <Circle className="w-6 h-6 text-text-secondary md:group-hover:text-text-primary transition-colors" />
+            )}
+          </button>
+        )}
+
+        <div className="flex flex-col truncate">
+          <span
+            className={`font-medium transition-all truncate ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
+          >
+            {task.title}
+          </span>
+          {task.subtasks && task.subtasks.length > 0 && (
+            <div className="flex items-center gap-1.5 mt-0.5 text-xs text-text-secondary">
+              <ListTodo className="w-3.5 h-3.5" />
+              <span>
+                {task.subtasks.filter((s) => s.completed).length} /{" "}
+                {task.subtasks.length}
               </span>
             </div>
-          </div>
-
-          {/* Desktop-Only Header */}
-          <div className="hidden md:flex py-8 flex-col items-center shrink-0">
-            <h1 className="text-5xl font-extrabold tracking-tight mb-8">
-              <span className="bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent bg-size-[200%_auto] animate-gradient">
-                TODO
-              </span>
-            </h1>
-            <div className="w-full">{taskInputForm}</div>
-          </div>
-
-          {/* Task List Block */}
-          <div className="flex-1 overflow-hidden flex flex-col md:bg-background-surface md:border border-border-subtle md:rounded-2xl md:shadow-sm md:mb-8">
-            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-border-subtle bg-background-main/30 shrink-0">
-              <button
-                onClick={toggleAllTasks}
-                disabled={tasks.length === 0}
-                className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {areAllTasksCompleted ? "Mark all undone" : "Mark all done"}
-              </button>
-              <button
-                onClick={() => setIsDeleteAllModalOpen(true)}
-                disabled={tasks.length === 0}
-                className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Delete All
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {tasks.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-text-secondary text-sm">
-                  No tasks yet. Add one above.
-                </div>
-              ) : (
-                tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    onClick={() => setSelectedTaskId(task.id)}
-                    className={`group flex items-center justify-between p-3 md:p-4 rounded-xl border transition-all cursor-pointer ${
-                      selectedTaskId === task.id
-                        ? "border-accent-primary bg-accent-subtle/30"
-                        : "border-border-subtle hover:border-text-secondary/30 md:hover:bg-background-main"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
-                      <button
-                        onClick={(e) => toggleTaskCompletion(task.id, e)}
-                        className="p-2 -ml-2 shrink-0 cursor-pointer"
-                      >
-                        {task.completed ? (
-                          <CheckCircle2 className="w-6 h-6 text-accent-primary" />
-                        ) : (
-                          <Circle className="w-6 h-6 text-text-secondary md:group-hover:text-text-primary transition-colors" />
-                        )}
-                      </button>
-                      <div className="flex flex-col truncate">
-                        <span
-                          className={`font-medium transition-all truncate ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
-                        >
-                          {task.title}
-                        </span>
-                        {task.subtasks && task.subtasks.length > 0 && (
-                          <div className="flex items-center gap-1.5 mt-0.5 text-xs text-text-secondary">
-                            <ListTodo className="w-3.5 h-3.5" />
-                            <span>
-                              {task.subtasks.filter((s) => s.completed).length}{" "}
-                              / {task.subtasks.length}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="relative shrink-0 ml-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDropdown(
-                            activeDropdown === task.id ? null : task.id,
-                          );
-                        }}
-                        className={`p-3 md:p-2 -mr-2 md:mr-0 rounded-lg hover:bg-background-surface transition-colors cursor-pointer ${getPriorityColor(task.priority)}`}
-                      >
-                        <Flag
-                          className="w-5 h-5"
-                          fill={
-                            task.priority !== "none" ? "currentColor" : "none"
-                          }
-                        />
-                      </button>
-
-                      {activeDropdown === task.id && (
-                        <div
-                          ref={dropdownRef}
-                          className="absolute right-0 mt-2 w-36 bg-background-surface border border-border-subtle rounded-xl shadow-lg z-20 py-2 animate-in fade-in zoom-in-95 duration-100"
-                        >
-                          <button
-                            onClick={(e) => updatePriority(task.id, "high", e)}
-                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
-                          >
-                            <Flag
-                              className="w-4 h-4 text-red-500"
-                              fill="currentColor"
-                            />{" "}
-                            High
-                          </button>
-                          <button
-                            onClick={(e) =>
-                              updatePriority(task.id, "medium", e)
-                            }
-                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
-                          >
-                            <Flag
-                              className="w-4 h-4 text-yellow-500"
-                              fill="currentColor"
-                            />{" "}
-                            Medium
-                          </button>
-                          <button
-                            onClick={(e) => updatePriority(task.id, "low", e)}
-                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
-                          >
-                            <Flag
-                              className="w-4 h-4 text-green-500"
-                              fill="currentColor"
-                            />{" "}
-                            Low
-                          </button>
-                          <button
-                            onClick={(e) => updatePriority(task.id, "none", e)}
-                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
-                          >
-                            <Flag className="w-4 h-4 text-text-secondary" />{" "}
-                            None
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Mobile Sticky Input Footer */}
-          <div className="md:hidden shrink-0 border-t border-border-subtle bg-background-surface px-4 pt-4 pb-8 shadow-[0_-8px_20px_rgba(0,0,0,0.08)]">
-            {taskInputForm}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Right: Task Sidebar */}
-      <TaskSidebar
-        task={selectedTask}
-        isOpen={!!selectedTaskId}
-        onClose={() => setSelectedTaskId(null)}
-        onUpdate={updateTask}
-        onDelete={(id) => {
-          setTasks(tasks.filter((t) => t.id !== id));
-          if (selectedTaskId === id) setSelectedTaskId(null); // Auto-close if the active task is deleted
-        }}
-        onDuplicate={(task) =>
-          setTasks([
-            ...tasks,
-            { ...task, id: crypto.randomUUID(), title: `${task.title} (Copy)` },
-          ])
-        }
-      />
+      {activeView === "trash" ? (
+        <div className="relative shrink-0 ml-2 flex items-center gap-1">
+          <button
+            onClick={(e) => onRestore(task.id, e)}
+            className="p-2 rounded-lg hover:bg-background-surface text-text-secondary hover:text-accent-primary transition-colors cursor-pointer"
+            title="Restore Task"
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
+          <button
+            onClick={(e) => onHardDelete(task.id, e)}
+            className="p-2 rounded-lg hover:bg-background-surface text-text-secondary hover:text-red-500 transition-colors cursor-pointer"
+            title="Permanently Delete"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      ) : (
+        <div className="relative shrink-0 ml-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveDropdown(activeDropdown === task.id ? null : task.id);
+            }}
+            className={`p-3 md:p-2 -mr-2 md:mr-0 rounded-lg hover:bg-background-surface transition-colors cursor-pointer ${getPriorityColor(task.priority)}`}
+          >
+            <Flag
+              className="w-5 h-5"
+              fill={task.priority !== "none" ? "currentColor" : "none"}
+            />
+          </button>
 
-      <ConfirmModal
-        isOpen={isDeleteAllModalOpen}
-        onClose={() => setIsDeleteAllModalOpen(false)}
-        onConfirm={() => {
-          setTasks([]);
-          setSelectedTaskId(null); // Auto-close sidebar when all tasks are deleted
-        }}
-        title="Delete All Tasks"
-        message="Are you sure you want to delete all tasks? This action will permanently remove everything in your current list."
-        confirmText="Delete All"
-        isDanger={true}
-      />
+          {activeDropdown === task.id && (
+            <div
+              ref={dropdownRef}
+              className="absolute right-0 mt-2 w-36 bg-background-surface border border-border-subtle rounded-xl shadow-lg z-20 py-2 animate-in fade-in zoom-in-95 duration-100"
+            >
+              <button
+                onClick={(e) => onUpdatePriority(task.id, "high", e)}
+                className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+              >
+                <Flag className="w-4 h-4 text-red-500" fill="currentColor" />{" "}
+                High
+              </button>
+              <button
+                onClick={(e) => onUpdatePriority(task.id, "medium", e)}
+                className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+              >
+                <Flag className="w-4 h-4 text-yellow-500" fill="currentColor" />{" "}
+                Medium
+              </button>
+              <button
+                onClick={(e) => onUpdatePriority(task.id, "low", e)}
+                className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+              >
+                <Flag className="w-4 h-4 text-green-500" fill="currentColor" />{" "}
+                Low
+              </button>
+              <button
+                onClick={(e) => onUpdatePriority(task.id, "none", e)}
+                className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+              >
+                <Flag className="w-4 h-4 text-text-secondary" /> None
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 ---------
-TaskSidebar.tsx
+TaskMenu.tsx
+import {
+  CalendarDays,
+  CalendarRange,
+  AlertCircle,
+  CheckSquare,
+  Trash2,
+} from "lucide-react";
+
+export type TaskView = "today" | "upcoming" | "overdue" | "completed" | "trash";
+
+interface TaskMenuProps {
+  activeView: TaskView;
+  setActiveView: (view: TaskView) => void;
+  counts: {
+    today: number;
+    upcoming: number;
+    overdue: number;
+    completed: number;
+  };
+}
+
+export function TaskMenu({ activeView, setActiveView, counts }: TaskMenuProps) {
+  const desktopMenuOptions = [
+    {
+      value: "today",
+      label: "Today",
+      count: counts.today,
+      icon: <CalendarDays className="w-4 h-4" />,
+    },
+    {
+      value: "upcoming",
+      label: "Upcoming",
+      count: counts.upcoming,
+      countClass:
+        "text-accent-primary bg-accent-primary/10 border-accent-primary/20",
+      icon: <CalendarRange className="w-4 h-4" />,
+    },
+    {
+      value: "overdue",
+      label: "Overdue",
+      count: counts.overdue,
+      countClass: "text-red-500 bg-red-500/10 border-red-500/20",
+      icon: <AlertCircle className="w-4 h-4" />,
+    },
+    {
+      value: "completed",
+      label: "Completed",
+      count: counts.completed,
+      icon: <CheckSquare className="w-4 h-4" />,
+    },
+    {
+      value: "trash",
+      label: "Trash Bin",
+      count: null,
+      icon: <Trash2 className="w-4 h-4" />,
+    },
+  ];
+
+  return (
+    <aside className="hidden md:flex flex-col w-56 shrink-0 py-2">
+      <nav className="space-y-1">
+        {desktopMenuOptions.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setActiveView(opt.value as TaskView)}
+            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+              activeView === opt.value
+                ? "bg-accent-subtle text-accent-primary"
+                : "text-text-secondary hover:bg-background-main hover:text-text-primary"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              {opt.icon}
+              {opt.label}
+            </div>
+            {opt.count !== null && (
+              <span
+                className={`px-2 py-0.5 rounded-md text-xs font-bold border transition-colors ${
+                  opt.countClass ||
+                  (activeView === opt.value
+                    ? "bg-accent-primary/10 text-accent-primary border-accent-primary/20"
+                    : "bg-background-main text-text-secondary border-border-subtle")
+                }`}
+              >
+                {opt.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </nav>
+    </aside>
+  );
+}
+---------
+TaskDetails.tsx
 import { useState } from "react";
 import {
   X,
@@ -1335,7 +1838,7 @@ export function TaskSidebar({
     <>
       <aside
         className={`
-          fixed inset-0 z-50 w-full bg-background-surface transform transition-all duration-300 ease-in-out flex flex-col
+          fixed inset-0 z-50 w-full bg-background-surface transform transition-all duration-300 ease-in-out flex flex-col rounded-2xl
           md:static md:z-auto md:h-full md:border-l border-border-subtle md:shadow-none md:transform-none
           ${
             isOpen
@@ -2006,6 +2509,8 @@ export interface Task {
   priority: Priority;
   dueDate?: string;
   subtasks: Subtask[];
+  createdAt: string; 
+  deletedAt?: string; 
 }
 ------------------
 life-tracker/packages/types/src/index.ts

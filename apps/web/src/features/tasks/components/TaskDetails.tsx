@@ -47,14 +47,9 @@ export function TaskSidebar({
     }
   }
 
-
   const currentTask = task || displayTask;
 
   if (!currentTask) return null;
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ ...currentTask, title: e.target.value });
-  };
 
   // Improved Subtask Addition Logic
   const handleAddSubtask = () => {
@@ -107,7 +102,7 @@ export function TaskSidebar({
     <>
       <aside
         className={`
-          fixed inset-0 z-50 w-full bg-background-surface transform transition-all duration-300 ease-in-out flex flex-col
+          fixed inset-0 z-50 w-full bg-background-surface transform transition-all duration-300 ease-in-out flex flex-col rounded-2xl
           md:static md:z-auto md:h-full md:border-l border-border-subtle md:shadow-none md:transform-none
           ${
             isOpen
@@ -154,13 +149,24 @@ export function TaskSidebar({
                   <Circle className="w-6 h-6 text-text-secondary hover:text-accent-primary transition-colors" />
                 )}
               </button>
-              <input
-                type="text"
+              <textarea
                 value={currentTask.title}
-                onChange={handleTitleChange}
-                onKeyDown={handleEnterToBlur}
+                onChange={(e) => {
+                  onUpdate({ ...currentTask, title: e.target.value });
+                  // Automatically adjust height based on text wrapping
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                onKeyDown={(e) => {
+                  // Maintain the "Enter to save/blur" functionality
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                }}
                 placeholder="Task title"
-                className="w-full bg-transparent text-xl font-bold text-text-primary outline-none focus:outline-none border-none rounded-md px-1 -ml-1 transition-all"
+                rows={1}
+                className="w-full bg-transparent text-2xl font-bold text-text-primary outline-none focus:outline-none border-none rounded-md px-1 -ml-1 transition-all resize-none overflow-hidden field-sizing:content"
               />
             </div>
 
