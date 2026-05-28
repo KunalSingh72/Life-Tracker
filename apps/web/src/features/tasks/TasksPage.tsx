@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import type { Task, Priority } from "@life-tracker/types";
 
-import { TaskSidebar } from "./components/TaskDetails";
+import { TaskDetails } from "./components/TaskDetails";
 import { TaskInput } from "./components/TaskInput";
 import { TaskMenu, type TaskView } from "./components/TaskMenu";
 import { TaskItem } from "./components/TaskItem";
@@ -491,7 +491,7 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <TaskSidebar
+      <TaskDetails
         task={tasks.find((t) => t.id === selectedTaskId) || null}
         isOpen={!!selectedTaskId}
         onClose={() => setSelectedTaskId(null)}

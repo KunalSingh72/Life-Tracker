@@ -14,7 +14,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Select } from "@/components/ui/Select";
 import { DatePicker } from "@/components/ui/DatePicker";
 
-interface TaskSidebarProps {
+interface TaskDetailsProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
@@ -23,14 +23,14 @@ interface TaskSidebarProps {
   onDuplicate: (task: Task) => void;
 }
 
-export function TaskSidebar({
+export function TaskDetails({
   task,
   isOpen,
   onClose,
   onUpdate,
   onDelete,
   onDuplicate,
-}: TaskSidebarProps) {
+}: TaskDetailsProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
 
