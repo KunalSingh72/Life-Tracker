@@ -31,6 +31,9 @@ life-tracker/
 │       │   │   │
 │       │   │   └── ui/
 │       │   │       └── BackgroundGrid.tsx
+│       │   │       └── Select.tsx
+│       │   │       └── ConfirmModal.tsx
+│       │   │       └── DatePicker.tsx
 │       │   │
 │       │   ├── config/
 │       │   |   └── navigation.ts
@@ -41,6 +44,8 @@ life-tracker/
 │       │   │   │   └── DashboardPage.tsx
 │       │   │   │
 │       │   │   ├── tasks/
+│       │   │   |   └── components/
+│       │   │   │           └── TaskSidebar.tsx
 │       │   │   │   └── TasksPage.tsx
 │       │   │   │
 │       │   │   ├── notes/
@@ -97,6 +102,7 @@ life-tracker/
 │   │   │
 │   │   ├── src/
 │   │   │   └── index.ts
+│   │   │   └── tasks.type.ts
 │   │   │
 │   │   ├── package.json
 │   │   └── tsconfig.json
@@ -481,6 +487,315 @@ export default function BackgroundGrid({ children }: BackgroundGridProps) {
     </div>
   );
 }
+------
+ConfirmModal.tsx
+interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  isDanger?: boolean;
+}
+
+export function ConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  isDanger = true,
+}: ConfirmModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal Dialog */}
+      <div className="relative w-full max-w-md bg-background-surface border border-border-subtle rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
+        <h3 className="text-xl font-bold text-text-primary mb-2">{title}</h3>
+        <p className="text-sm text-text-secondary mb-6">{message}</p>
+
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-text-secondary hover:bg-background-main transition-colors cursor-pointer"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+              isDanger
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-accent-primary text-white hover:bg-accent-primary/90"
+            }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+-------------
+DatePicker.tsx
+import { useState, useRef, useEffect } from "react";
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  isSameDay,
+  addDays,
+  parseISO,
+} from "date-fns";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
+
+interface DatePickerProps {
+  value?: string;
+  onChange: (date: string | undefined) => void;
+  placeholder?: string;
+  className?: string;
+  align?: "left" | "right"; // Added alignment property
+}
+
+export function DatePicker({
+  value,
+  onChange,
+  placeholder = "Set date",
+  className = "",
+  align = "left",
+}: DatePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(
+    value ? parseISO(value) : new Date(),
+  );
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedDate = value ? parseISO(value) : undefined;
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+
+  const calendarDays: Date[] = [];
+  let day = startDate;
+  while (day <= endDate) {
+    calendarDays.push(day);
+    day = addDays(day, 1);
+  }
+
+  const handleDateSelect = (date: Date) => {
+    onChange(format(date, "yyyy-MM-dd"));
+    setIsOpen(false);
+  };
+
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex-1 flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-background-main border border-transparent hover:border-border-subtle rounded-lg text-sm text-text-primary transition-all cursor-pointer outline-none"
+        >
+          <CalendarIcon className="w-4 h-4 text-text-secondary" />
+          <span>
+            {selectedDate ? format(selectedDate, "MMM d, yyyy") : placeholder}
+          </span>
+        </button>
+        {value && (
+          <button
+            onClick={() => onChange(undefined)}
+            className="p-1.5 text-text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} top-full mt-1 w-72 bg-background-surface border border-border-subtle rounded-xl shadow-xl z-50 p-4 animate-in fade-in zoom-in-95 duration-100`}
+        >
+          {/* Calendar Header */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-semibold text-text-primary">
+              {format(currentMonth, "MMMM yyyy")}
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="p-1.5 rounded-md hover:bg-background-main text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="p-1.5 rounded-md hover:bg-background-main text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Days of Week */}
+          <div className="grid grid-cols-7 mb-2 text-center">
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+              <span key={d} className="text-xs font-medium text-text-secondary">
+                {d}
+              </span>
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((date, idx) => {
+              const isSelected = selectedDate && isSameDay(date, selectedDate);
+              const isCurrentMonth = isSameMonth(date, currentMonth);
+              const isToday = isSameDay(date, new Date());
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleDateSelect(date)}
+                  className={`h-8 w-full rounded-md text-sm flex items-center justify-center transition-all cursor-pointer ${!isCurrentMonth ? "text-text-secondary/40" : "text-text-primary"} ${isSelected ? "bg-accent-primary text-white font-medium" : "hover:bg-background-main"} ${isToday && !isSelected ? "border border-accent-primary text-accent-primary" : "border border-transparent"}`}
+                >
+                  {format(date, "d")}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+--------
+Select.tsx
+import { useState, useRef, useEffect, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+
+export interface SelectOption {
+  value: string;
+  label: string;
+  icon?: ReactNode;
+}
+
+interface SelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+  placeholder?: string;
+  className?: string;
+  align?: "left" | "right"; // Added type definition for align
+}
+
+export function Select({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  className = "",
+  align = "left", // Added align to destructured parameters with default value
+}: SelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find((opt) => opt.value === value);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-transparent hover:bg-background-main border border-transparent hover:border-border-subtle rounded-lg text-sm text-text-primary transition-all cursor-pointer outline-none focus:ring-2 focus:ring-accent-primary/20"
+      >
+        <div className="flex items-center gap-2 truncate">
+          {selectedOption?.icon}
+          <span className="truncate">
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+        </div>
+        <ChevronDown
+          className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} top-full mt-1 w-full min-w-40 bg-background-surface border border-border-subtle rounded-xl shadow-lg z-50 py-1.5 animate-in fade-in zoom-in-95 duration-100`}
+        >
+          {options.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left cursor-pointer transition-colors ${
+                value === option.value
+                  ? "bg-accent-subtle text-accent-primary font-medium"
+                  : "text-text-primary hover:bg-background-main"
+              }`}
+            >
+              {option.icon}
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 ----
 AppProviders.tsx
 import type { ReactNode } from "react";
@@ -575,6 +890,691 @@ export const NAVIGATION_LINKS = [
   { name: "Health", href: "/health", icon: HeartPulse },
 ];
 -----
+TasksPage.tsx
+import { useState, useRef, useEffect } from "react";
+import { CheckCircle2, Circle, Flag, ListTodo, Menu } from "lucide-react";
+import type { Task, Priority } from "@life-tracker/types";
+import { TaskSidebar } from "./components/TaskSidebar";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useUiStore } from "@/stores/ui.store";
+
+const STORAGE_KEY = "life-tracker-tasks";
+
+export default function TasksPage() {
+  const { openMobileMenu } = useUiStore();
+
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    try {
+      const savedTasks = localStorage.getItem(STORAGE_KEY);
+      if (savedTasks) {
+        const parsed = JSON.parse(savedTasks);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return [];
+    } catch (error) {
+      console.error("Failed to parse tasks from local storage", error);
+      return [];
+    }
+  });
+
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }, [tasks]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setActiveDropdown(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleAddTask = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      title: newTaskTitle.trim(),
+      completed: false,
+      priority: "none",
+      subtasks: [],
+    };
+    setTasks([newTask, ...tasks]);
+    setNewTaskTitle("");
+  };
+
+  const updateTask = (updatedTask: Task) =>
+    setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+
+  const toggleTaskCompletion = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTasks(
+      tasks.map((t) =>
+        t.id === taskId ? { ...t, completed: !t.completed } : t,
+      ),
+    );
+  };
+
+  const updatePriority = (
+    taskId: string,
+    priority: Priority,
+    e: React.MouseEvent,
+  ) => {
+    e.stopPropagation();
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, priority } : t)));
+    setActiveDropdown(null);
+  };
+
+  const getPriorityColor = (priority: Priority) => {
+    switch (priority) {
+      case "high":
+        return "text-red-500";
+      case "medium":
+        return "text-yellow-500";
+      case "low":
+        return "text-green-500";
+      default:
+        return "text-text-secondary";
+    }
+  };
+
+  const areAllTasksCompleted =
+    tasks.length > 0 && tasks.every((t) => t.completed);
+  const toggleAllTasks = () =>
+    setTasks(tasks.map((t) => ({ ...t, completed: !areAllTasksCompleted })));
+
+  const selectedTask = tasks.find((t) => t.id === selectedTaskId) || null;
+
+  const taskInputForm = (
+    <form
+      onSubmit={handleAddTask}
+      className="w-full relative flex items-center group"
+    >
+      <input
+        type="text"
+        value={newTaskTitle}
+        onChange={(e) => setNewTaskTitle(e.target.value)}
+        placeholder="Add a task..."
+        className="w-full bg-background-main md:bg-background-surface border border-border-subtle rounded-xl md:rounded-2xl py-3 md:py-4 pl-4 md:pl-6 pr-20 md:pr-24 text-text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 transition-all text-sm md:text-base"
+      />
+      <button
+        type="submit"
+        disabled={!newTaskTitle.trim()}
+        className="absolute right-2 md:right-2 bg-accent-primary text-white font-medium py-1.5 md:py-2 px-4 md:px-6 rounded-lg md:rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2 text-sm md:text-base"
+      >
+        Add
+      </button>
+    </form>
+  );
+
+  return (
+    <div className="flex h-full w-full absolute inset-0 z-20 bg-background-surface md:static md:bg-transparent overflow-hidden">
+      {/* Left: Main Task List Area */}
+      <div className="flex-1 flex flex-col h-full min-w-0 transition-all duration-300">
+        <div className="flex flex-col h-full max-w-4xl w-full mx-auto relative pb-2 md:pb-0 px-0 md:px-8">
+          {/* Mobile-Only Header */}
+          <div className="md:hidden flex items-center justify-between px-4 h-16 border-b border-border-subtle shrink-0">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openMobileMenu}
+                className="p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <span className="text-2xl font-extrabold bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent">
+                TODO
+              </span>
+            </div>
+          </div>
+
+          {/* Desktop-Only Header */}
+          <div className="hidden md:flex py-8 flex-col items-center shrink-0">
+            <h1 className="text-5xl font-extrabold tracking-tight mb-8">
+              <span className="bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent bg-size-[200%_auto] animate-gradient">
+                TODO
+              </span>
+            </h1>
+            <div className="w-full">{taskInputForm}</div>
+          </div>
+
+          {/* Task List Block */}
+          <div className="flex-1 overflow-hidden flex flex-col md:bg-background-surface md:border border-border-subtle md:rounded-2xl md:shadow-sm md:mb-8">
+            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-border-subtle bg-background-main/30 shrink-0">
+              <button
+                onClick={toggleAllTasks}
+                disabled={tasks.length === 0}
+                className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {areAllTasksCompleted ? "Mark all undone" : "Mark all done"}
+              </button>
+              <button
+                onClick={() => setIsDeleteAllModalOpen(true)}
+                disabled={tasks.length === 0}
+                className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Delete All
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {tasks.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-text-secondary text-sm">
+                  No tasks yet. Add one above.
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => setSelectedTaskId(task.id)}
+                    className={`group flex items-center justify-between p-3 md:p-4 rounded-xl border transition-all cursor-pointer ${
+                      selectedTaskId === task.id
+                        ? "border-accent-primary bg-accent-subtle/30"
+                        : "border-border-subtle hover:border-text-secondary/30 md:hover:bg-background-main"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+                      <button
+                        onClick={(e) => toggleTaskCompletion(task.id, e)}
+                        className="p-2 -ml-2 shrink-0 cursor-pointer"
+                      >
+                        {task.completed ? (
+                          <CheckCircle2 className="w-6 h-6 text-accent-primary" />
+                        ) : (
+                          <Circle className="w-6 h-6 text-text-secondary md:group-hover:text-text-primary transition-colors" />
+                        )}
+                      </button>
+                      <div className="flex flex-col truncate">
+                        <span
+                          className={`font-medium transition-all truncate ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
+                        >
+                          {task.title}
+                        </span>
+                        {task.subtasks && task.subtasks.length > 0 && (
+                          <div className="flex items-center gap-1.5 mt-0.5 text-xs text-text-secondary">
+                            <ListTodo className="w-3.5 h-3.5" />
+                            <span>
+                              {task.subtasks.filter((s) => s.completed).length}{" "}
+                              / {task.subtasks.length}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative shrink-0 ml-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdown(
+                            activeDropdown === task.id ? null : task.id,
+                          );
+                        }}
+                        className={`p-3 md:p-2 -mr-2 md:mr-0 rounded-lg hover:bg-background-surface transition-colors cursor-pointer ${getPriorityColor(task.priority)}`}
+                      >
+                        <Flag
+                          className="w-5 h-5"
+                          fill={
+                            task.priority !== "none" ? "currentColor" : "none"
+                          }
+                        />
+                      </button>
+
+                      {activeDropdown === task.id && (
+                        <div
+                          ref={dropdownRef}
+                          className="absolute right-0 mt-2 w-36 bg-background-surface border border-border-subtle rounded-xl shadow-lg z-20 py-2 animate-in fade-in zoom-in-95 duration-100"
+                        >
+                          <button
+                            onClick={(e) => updatePriority(task.id, "high", e)}
+                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+                          >
+                            <Flag
+                              className="w-4 h-4 text-red-500"
+                              fill="currentColor"
+                            />{" "}
+                            High
+                          </button>
+                          <button
+                            onClick={(e) =>
+                              updatePriority(task.id, "medium", e)
+                            }
+                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+                          >
+                            <Flag
+                              className="w-4 h-4 text-yellow-500"
+                              fill="currentColor"
+                            />{" "}
+                            Medium
+                          </button>
+                          <button
+                            onClick={(e) => updatePriority(task.id, "low", e)}
+                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+                          >
+                            <Flag
+                              className="w-4 h-4 text-green-500"
+                              fill="currentColor"
+                            />{" "}
+                            Low
+                          </button>
+                          <button
+                            onClick={(e) => updatePriority(task.id, "none", e)}
+                            className="w-full text-left px-4 py-3 md:py-2 text-sm text-text-primary hover:bg-background-main flex items-center gap-2 cursor-pointer"
+                          >
+                            <Flag className="w-4 h-4 text-text-secondary" />{" "}
+                            None
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Sticky Input Footer */}
+          <div className="md:hidden shrink-0 border-t border-border-subtle bg-background-surface px-4 pt-4 pb-8 shadow-[0_-8px_20px_rgba(0,0,0,0.08)]">
+            {taskInputForm}
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Task Sidebar */}
+      <TaskSidebar
+        task={selectedTask}
+        isOpen={!!selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+        onUpdate={updateTask}
+        onDelete={(id) => {
+          setTasks(tasks.filter((t) => t.id !== id));
+          if (selectedTaskId === id) setSelectedTaskId(null); // Auto-close if the active task is deleted
+        }}
+        onDuplicate={(task) =>
+          setTasks([
+            ...tasks,
+            { ...task, id: crypto.randomUUID(), title: `${task.title} (Copy)` },
+          ])
+        }
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onConfirm={() => {
+          setTasks([]);
+          setSelectedTaskId(null); // Auto-close sidebar when all tasks are deleted
+        }}
+        title="Delete All Tasks"
+        message="Are you sure you want to delete all tasks? This action will permanently remove everything in your current list."
+        confirmText="Delete All"
+        isDanger={true}
+      />
+    </div>
+  );
+}
+---------
+TaskSidebar.tsx
+import { useState } from "react";
+import {
+  X,
+  Flag,
+  Trash2,
+  Copy,
+  Plus,
+  CheckCircle2,
+  Circle,
+  ChevronLeft,
+} from "lucide-react";
+import type { Task, Priority, Subtask } from "@life-tracker/types"; // <-- Updated Import
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Select } from "@/components/ui/Select";
+import { DatePicker } from "@/components/ui/DatePicker";
+
+interface TaskSidebarProps {
+  task: Task | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate: (updatedTask: Task) => void;
+  onDelete: (taskId: string) => void;
+  onDuplicate: (task: Task) => void;
+}
+
+export function TaskSidebar({
+  task,
+  isOpen,
+  onClose,
+  onUpdate,
+  onDelete,
+  onDuplicate,
+}: TaskSidebarProps) {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+
+  const [prevTask, setPrevTask] = useState<Task | null>(task);
+  const [displayTask, setDisplayTask] = useState<Task | null>(task);
+
+  if (task !== prevTask) {
+    setPrevTask(task);
+
+    setNewSubtaskTitle("");
+
+    if (task !== null) {
+      setDisplayTask(task);
+    }
+  }
+
+
+  const currentTask = task || displayTask;
+
+  if (!currentTask) return null;
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onUpdate({ ...currentTask, title: e.target.value });
+  };
+
+  // Improved Subtask Addition Logic
+  const handleAddSubtask = () => {
+    if (!newSubtaskTitle.trim()) return;
+
+    const newSubtask: Subtask = {
+      id: crypto.randomUUID(),
+      title: newSubtaskTitle.trim(),
+      completed: false,
+    };
+
+    onUpdate({
+      ...currentTask,
+      subtasks: [...currentTask.subtasks, newSubtask],
+    });
+    setNewSubtaskTitle(""); // Reset the input field for the next one
+  };
+
+  const handleNewSubtaskKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSubtask();
+    }
+  };
+
+  const updateSubtask = (subtaskId: string, updates: Partial<Subtask>) => {
+    const updatedSubtasks = currentTask.subtasks.map((st) =>
+      st.id === subtaskId ? { ...st, ...updates } : st,
+    );
+    onUpdate({ ...currentTask, subtasks: updatedSubtasks });
+  };
+
+  const removeSubtask = (subtaskId: string) => {
+    onUpdate({
+      ...currentTask,
+      subtasks: currentTask.subtasks.filter((st) => st.id !== subtaskId),
+    });
+  };
+
+  const handleEnterToBlur = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+    }
+  };
+
+  return (
+    <>
+      <aside
+        className={`
+          fixed inset-0 z-50 w-full bg-background-surface transform transition-all duration-300 ease-in-out flex flex-col
+          md:static md:z-auto md:h-full md:border-l border-border-subtle md:shadow-none md:transform-none
+          ${
+            isOpen
+              ? "translate-x-0 md:w-100 md:min-w-100 md:opacity-100"
+              : "translate-x-full md:w-0 md:min-w-0 md:opacity-0 md:border-none md:overflow-hidden"
+          }
+        `}
+      >
+        <div className="w-full md:w-100 h-full flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-border-subtle shrink-0">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onClose}
+                className="p-2 -ml-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer md:hidden"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <span className="font-semibold text-text-secondary text-sm">
+                Task Details
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 -mr-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer hidden md:block"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+            <div className="flex items-start gap-3">
+              <button
+                onClick={() =>
+                  onUpdate({
+                    ...currentTask,
+                    completed: !currentTask.completed,
+                  })
+                }
+                className="mt-1 p-1 -ml-1 shrink-0 cursor-pointer"
+              >
+                {currentTask.completed ? (
+                  <CheckCircle2 className="w-6 h-6 text-accent-primary" />
+                ) : (
+                  <Circle className="w-6 h-6 text-text-secondary hover:text-accent-primary transition-colors" />
+                )}
+              </button>
+              <input
+                type="text"
+                value={currentTask.title}
+                onChange={handleTitleChange}
+                onKeyDown={handleEnterToBlur}
+                placeholder="Task title"
+                className="w-full bg-transparent text-xl font-bold text-text-primary outline-none focus:outline-none border-none rounded-md px-1 -ml-1 transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <span className="w-24 text-sm text-text-secondary">
+                  Due Date
+                </span>
+                <div className="flex-1">
+                  <DatePicker
+                    value={currentTask.dueDate}
+                    onChange={(date) =>
+                      onUpdate({ ...currentTask, dueDate: date })
+                    }
+                    align="right"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <span className="w-24 text-sm text-text-secondary">
+                  Priority
+                </span>
+                <div className="flex-1">
+                  <Select
+                    value={currentTask.priority || "none"}
+                    onChange={(val) =>
+                      onUpdate({ ...currentTask, priority: val as Priority })
+                    }
+                    options={[
+                      {
+                        value: "none",
+                        label: "No Priority",
+                        icon: <Flag className="w-4 h-4 text-text-secondary" />,
+                      },
+                      {
+                        value: "low",
+                        label: "Low",
+                        icon: (
+                          <Flag
+                            className="w-4 h-4 text-green-500"
+                            fill="currentColor"
+                          />
+                        ),
+                      },
+                      {
+                        value: "medium",
+                        label: "Medium",
+                        icon: (
+                          <Flag
+                            className="w-4 h-4 text-yellow-500"
+                            fill="currentColor"
+                          />
+                        ),
+                      },
+                      {
+                        value: "high",
+                        label: "High",
+                        icon: (
+                          <Flag
+                            className="w-4 h-4 text-red-500"
+                            fill="currentColor"
+                          />
+                        ),
+                      },
+                    ]}
+                    align="right"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <hr className="border-border-subtle" />
+
+            {/* Subtasks Section */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-text-primary">
+                Subtasks
+              </h4>
+              <div className="space-y-2">
+                {/* Existing Subtasks */}
+                {currentTask.subtasks.map((st) => (
+                  <div key={st.id} className="flex items-center gap-2 group">
+                    <button
+                      onClick={() =>
+                        updateSubtask(st.id, { completed: !st.completed })
+                      }
+                      className="p-1 -ml-1 cursor-pointer"
+                    >
+                      {st.completed ? (
+                        <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4 text-accent-primary" />
+                      ) : (
+                        <Circle className="w-5 h-5 md:w-4 md:h-4 text-text-secondary" />
+                      )}
+                    </button>
+                    <input
+                      type="text"
+                      value={st.title}
+                      onChange={(e) =>
+                        updateSubtask(st.id, { title: e.target.value })
+                      }
+                      onKeyDown={handleEnterToBlur}
+                      className={`flex-1 bg-transparent text-sm outline-none focus:outline-none border-none py-2 md:py-1 ${st.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
+                    />
+                    <button
+                      onClick={() => removeSubtask(st.id)}
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-text-secondary hover:text-red-500 transition-opacity p-2 md:p-1 cursor-pointer"
+                    >
+                      <X className="w-5 h-5 md:w-4 md:h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Always-Visible Empty Input Row for New Subtasks */}
+                <div className="flex items-center gap-2 opacity-60 focus-within:opacity-100 transition-opacity">
+                  <Plus className="w-5 h-5 md:w-4 md:h-4 text-text-secondary ml-1 mr-1" />
+                  <input
+                    type="text"
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    onKeyDown={handleNewSubtaskKeyDown}
+                    onBlur={handleAddSubtask}
+                    placeholder="Add a subtask..."
+                    className="flex-1 bg-transparent text-sm outline-none focus:outline-none border-none py-2 md:py-1 text-text-primary"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 border-t border-border-subtle flex items-center justify-between bg-background-main/50 shrink-0 mb-safe">
+            <button
+              onClick={() => onDuplicate(currentTask)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-secondary hover:bg-background-surface hover:text-text-primary rounded-md transition-colors cursor-pointer"
+            >
+              <Copy className="w-4 h-4" />
+              Duplicate
+            </button>
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => {
+          onDelete(currentTask.id);
+          onClose();
+        }}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${currentTask.title}"? This action cannot be undone.`}
+        confirmText="Delete Task"
+        isDanger={true}
+      />
+    </>
+  );
+}
+-----
+ui.store.tsx
+
+import { create } from "zustand";
+
+interface UiState {
+  isMobileMenuOpen: boolean;
+  openMobileMenu: () => void;
+  closeMobileMenu: () => void;
+  toggleMobileMenu: () => void;
+}
+
+export const useUiStore = create<UiState>((set) => ({
+  isMobileMenuOpen: false,
+  openMobileMenu: () => set({ isMobileMenuOpen: true }),
+  closeMobileMenu: () => set({ isMobileMenuOpen: false }),
+  toggleMobileMenu: () =>
+    set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+}));
+
+
+-----
 useTheme.ts
 import { useContext } from "react";
 import { ThemeContext } from "@/app/providers/ThemeContext";
@@ -617,38 +1617,48 @@ index.css
 
 @layer base {
   :root {
-    /* Light Theme - Black & White Backgrounds */
+    /* Light Theme */
     --bg-main: #f5f5f5;
     --bg-surface: #ffffff;
-
     --text-primary: #111111;
     --text-secondary: #6b7280;
-
     --border-subtle: #e5e7eb;
-
-    /* Purple Accent */
-    --accent-primary: #7c3aed; /* Violet 600 */
-    --accent-subtle: #f3e8ff;  /* Violet 100 */
+    --accent-primary: #7c3aed; 
+    --accent-subtle: #f3e8ff;  
   }
 
   :root[data-theme="dark"] {
-    /* Dark Theme - Black & White Backgrounds */
+    /* Dark Theme */
     --bg-main: #0f0f0f;
     --bg-surface: #181818;
-
     --text-primary: #ffffff;
     --text-secondary: #9ca3af;
-
     --border-subtle: #2a2a2a;
-
-    /* Purple Accent */
-    --accent-primary: #a78bfa; /* Violet 400 */
+    --accent-primary: #a78bfa; 
     --accent-subtle: rgba(124, 58, 237, 0.15);
   }
 
   body {
     @apply bg-background-main text-text-primary antialiased;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  /* --- Custom Minimal Scrollbar --- */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border-subtle rounded-full transition-colors;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-secondary opacity-50;
   }
 }
 ------
@@ -980,6 +1990,27 @@ life-tracker/packages/types/tsconfig.json
   "include": ["src"]
 }
 ---
+life-tracker/packages/types/src/tasks.type.ts
+export type Priority = "none" | "low" | "medium" | "high";
+
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  priority: Priority;
+  dueDate?: string;
+  subtasks: Subtask[];
+}
+------------------
+life-tracker/packages/types/src/index.ts
+export * from './tasks.type';
+----
 
 life-tracker/packages/utils/package.json
 {

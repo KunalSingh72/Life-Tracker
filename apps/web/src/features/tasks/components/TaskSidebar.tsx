@@ -7,9 +7,9 @@ import {
   Plus,
   CheckCircle2,
   Circle,
-  ChevronLeft
+  ChevronLeft,
 } from "lucide-react";
-import type { Task, Priority, Subtask } from "../types";
+import type { Task, Priority, Subtask } from "@life-tracker/types"; // <-- Updated Import
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Select } from "@/components/ui/Select";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -32,242 +32,293 @@ export function TaskSidebar({
   onDuplicate,
 }: TaskSidebarProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  if (!task) return null;
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+
+  const [prevTask, setPrevTask] = useState<Task | null>(task);
+  const [displayTask, setDisplayTask] = useState<Task | null>(task);
+
+  if (task !== prevTask) {
+    setPrevTask(task);
+
+    setNewSubtaskTitle("");
+
+    if (task !== null) {
+      setDisplayTask(task);
+    }
+  }
+
+
+  const currentTask = task || displayTask;
+
+  if (!currentTask) return null;
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ ...task, title: e.target.value });
+    onUpdate({ ...currentTask, title: e.target.value });
   };
 
-  const addSubtask = () => {
+  // Improved Subtask Addition Logic
+  const handleAddSubtask = () => {
+    if (!newSubtaskTitle.trim()) return;
+
     const newSubtask: Subtask = {
       id: crypto.randomUUID(),
-      title: "",
+      title: newSubtaskTitle.trim(),
       completed: false,
     };
-    onUpdate({ ...task, subtasks: [...task.subtasks, newSubtask] });
+
+    onUpdate({
+      ...currentTask,
+      subtasks: [...currentTask.subtasks, newSubtask],
+    });
+    setNewSubtaskTitle(""); // Reset the input field for the next one
+  };
+
+  const handleNewSubtaskKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSubtask();
+    }
   };
 
   const updateSubtask = (subtaskId: string, updates: Partial<Subtask>) => {
-    const updatedSubtasks = task.subtasks.map((st) =>
+    const updatedSubtasks = currentTask.subtasks.map((st) =>
       st.id === subtaskId ? { ...st, ...updates } : st,
     );
-    onUpdate({ ...task, subtasks: updatedSubtasks });
+    onUpdate({ ...currentTask, subtasks: updatedSubtasks });
   };
 
   const removeSubtask = (subtaskId: string) => {
     onUpdate({
-      ...task,
-      subtasks: task.subtasks.filter((st) => st.id !== subtaskId),
+      ...currentTask,
+      subtasks: currentTask.subtasks.filter((st) => st.id !== subtaskId),
     });
   };
+
   const handleEnterToBlur = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       e.currentTarget.blur();
     }
   };
+
   return (
     <>
-      {/* Mobile Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 hidden md:block lg:hidden"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Sidebar / Full-Screen Panel */}
       <aside
-        className={`fixed inset-0 md:inset-y-0 md:left-auto md:right-0 z-50 w-full md:max-w-sm bg-background-surface md:border-l border-border-subtle shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`
+          fixed inset-0 z-50 w-full bg-background-surface transform transition-all duration-300 ease-in-out flex flex-col
+          md:static md:z-auto md:h-full md:border-l border-border-subtle md:shadow-none md:transform-none
+          ${
+            isOpen
+              ? "translate-x-0 md:w-100 md:min-w-100 md:opacity-100"
+              : "translate-x-full md:w-0 md:min-w-0 md:opacity-0 md:border-none md:overflow-hidden"
+          }
+        `}
       >
-        <div className="flex items-center justify-between p-4 border-b border-border-subtle shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="w-full md:w-100 h-full flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-border-subtle shrink-0">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onClose}
+                className="p-2 -ml-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer md:hidden"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <span className="font-semibold text-text-secondary text-sm">
+                Task Details
+              </span>
+            </div>
             <button
               onClick={onClose}
-              className="p-2 -ml-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer md:hidden"
+              className="p-2 -mr-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer hidden md:block"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
-            <span className="font-semibold text-text-secondary text-sm">
-              Task Details
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 -mr-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer hidden md:block"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-          {/* Status & Title */}
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => onUpdate({ ...task, completed: !task.completed })}
-              className="mt-1 p-1 -ml-1 flex-shrink-0 cursor-pointer"
-            >
-              {task.completed ? (
-                <CheckCircle2 className="w-6 h-6 text-accent-primary" />
-              ) : (
-                <Circle className="w-6 h-6 text-text-secondary hover:text-accent-primary transition-colors" />
-              )}
-            </button>
-            <input
-              type="text"
-              value={task.title}
-              onChange={handleTitleChange}
-              onKeyDown={handleEnterToBlur}
-              placeholder="Task title"
-              className="w-full bg-transparent text-xl font-bold text-text-primary outline-none focus:outline-none border-none rounded-md px-1 -ml-1 transition-all"
-            />
           </div>
 
-          {/* Properties */}
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <span className="w-24 text-sm text-text-secondary">Due Date</span>
-              <div className="flex-1">
-                <DatePicker
-                  value={task.dueDate}
-                  onChange={(date) => onUpdate({ ...task, dueDate: date })}
-                  align="right"
-                />
-              </div>
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+            <div className="flex items-start gap-3">
+              <button
+                onClick={() =>
+                  onUpdate({
+                    ...currentTask,
+                    completed: !currentTask.completed,
+                  })
+                }
+                className="mt-1 p-1 -ml-1 shrink-0 cursor-pointer"
+              >
+                {currentTask.completed ? (
+                  <CheckCircle2 className="w-6 h-6 text-accent-primary" />
+                ) : (
+                  <Circle className="w-6 h-6 text-text-secondary hover:text-accent-primary transition-colors" />
+                )}
+              </button>
+              <input
+                type="text"
+                value={currentTask.title}
+                onChange={handleTitleChange}
+                onKeyDown={handleEnterToBlur}
+                placeholder="Task title"
+                className="w-full bg-transparent text-xl font-bold text-text-primary outline-none focus:outline-none border-none rounded-md px-1 -ml-1 transition-all"
+              />
             </div>
 
-            <div className="flex items-center">
-              <span className="w-24 text-sm text-text-secondary">Priority</span>
-              <div className="flex-1">
-                <Select
-                  value={task.priority}
-                  onChange={(val) =>
-                    onUpdate({ ...task, priority: val as Priority })
-                  }
-                  options={[
-                    {
-                      value: "none",
-                      label: "No Priority",
-                      icon: <Flag className="w-4 h-4 text-text-secondary" />,
-                    },
-                    {
-                      value: "low",
-                      label: "Low",
-                      icon: (
-                        <Flag
-                          className="w-4 h-4 text-green-500"
-                          fill="currentColor"
-                        />
-                      ),
-                    },
-                    {
-                      value: "medium",
-                      label: "Medium",
-                      icon: (
-                        <Flag
-                          className="w-4 h-4 text-yellow-500"
-                          fill="currentColor"
-                        />
-                      ),
-                    },
-                    {
-                      value: "high",
-                      label: "High",
-                      icon: (
-                        <Flag
-                          className="w-4 h-4 text-red-500"
-                          fill="currentColor"
-                        />
-                      ),
-                    },
-                  ]}
-                  align="right"
-                />
-              </div>
-            </div>
-          </div>
-
-          <hr className="border-border-subtle" />
-
-          {/* Subtasks */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-text-primary">Subtasks</h4>
             <div className="space-y-2">
-              {task.subtasks.map((st) => (
-                <div key={st.id} className="flex items-center gap-2 group">
-                  <button
-                    onClick={() =>
-                      updateSubtask(st.id, { completed: !st.completed })
+              <div className="flex items-center">
+                <span className="w-24 text-sm text-text-secondary">
+                  Due Date
+                </span>
+                <div className="flex-1">
+                  <DatePicker
+                    value={currentTask.dueDate}
+                    onChange={(date) =>
+                      onUpdate({ ...currentTask, dueDate: date })
                     }
-                    className="p-1 -ml-1 cursor-pointer"
-                  >
-                    {st.completed ? (
-                      <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4 text-accent-primary" />
-                    ) : (
-                      <Circle className="w-5 h-5 md:w-4 md:h-4 text-text-secondary" />
-                    )}
-                  </button>
+                    align="right"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <span className="w-24 text-sm text-text-secondary">
+                  Priority
+                </span>
+                <div className="flex-1">
+                  <Select
+                    value={currentTask.priority || "none"}
+                    onChange={(val) =>
+                      onUpdate({ ...currentTask, priority: val as Priority })
+                    }
+                    options={[
+                      {
+                        value: "none",
+                        label: "No Priority",
+                        icon: <Flag className="w-4 h-4 text-text-secondary" />,
+                      },
+                      {
+                        value: "low",
+                        label: "Low",
+                        icon: (
+                          <Flag
+                            className="w-4 h-4 text-green-500"
+                            fill="currentColor"
+                          />
+                        ),
+                      },
+                      {
+                        value: "medium",
+                        label: "Medium",
+                        icon: (
+                          <Flag
+                            className="w-4 h-4 text-yellow-500"
+                            fill="currentColor"
+                          />
+                        ),
+                      },
+                      {
+                        value: "high",
+                        label: "High",
+                        icon: (
+                          <Flag
+                            className="w-4 h-4 text-red-500"
+                            fill="currentColor"
+                          />
+                        ),
+                      },
+                    ]}
+                    align="right"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <hr className="border-border-subtle" />
+
+            {/* Subtasks Section */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-text-primary">
+                Subtasks
+              </h4>
+              <div className="space-y-2">
+                {/* Existing Subtasks */}
+                {currentTask.subtasks.map((st) => (
+                  <div key={st.id} className="flex items-center gap-2 group">
+                    <button
+                      onClick={() =>
+                        updateSubtask(st.id, { completed: !st.completed })
+                      }
+                      className="p-1 -ml-1 cursor-pointer"
+                    >
+                      {st.completed ? (
+                        <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4 text-accent-primary" />
+                      ) : (
+                        <Circle className="w-5 h-5 md:w-4 md:h-4 text-text-secondary" />
+                      )}
+                    </button>
+                    <input
+                      type="text"
+                      value={st.title}
+                      onChange={(e) =>
+                        updateSubtask(st.id, { title: e.target.value })
+                      }
+                      onKeyDown={handleEnterToBlur}
+                      className={`flex-1 bg-transparent text-sm outline-none focus:outline-none border-none py-2 md:py-1 ${st.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
+                    />
+                    <button
+                      onClick={() => removeSubtask(st.id)}
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-text-secondary hover:text-red-500 transition-opacity p-2 md:p-1 cursor-pointer"
+                    >
+                      <X className="w-5 h-5 md:w-4 md:h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Always-Visible Empty Input Row for New Subtasks */}
+                <div className="flex items-center gap-2 opacity-60 focus-within:opacity-100 transition-opacity">
+                  <Plus className="w-5 h-5 md:w-4 md:h-4 text-text-secondary ml-1 mr-1" />
                   <input
                     type="text"
-                    value={st.title}
-                    onChange={(e) =>
-                      updateSubtask(st.id, { title: e.target.value })
-                    }
-                    onKeyDown={handleEnterToBlur}
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    onKeyDown={handleNewSubtaskKeyDown}
+                    onBlur={handleAddSubtask}
                     placeholder="Add a subtask..."
-                    className={`flex-1 bg-transparent text-sm outline-none focus:outline-none border-none py-2 md:py-1 ${st.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
+                    className="flex-1 bg-transparent text-sm outline-none focus:outline-none border-none py-2 md:py-1 text-text-primary"
                   />
-                  {/* Mobile: opacity-100 to ensure visibility without hover */}
-                  <button
-                    onClick={() => removeSubtask(st.id)}
-                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-text-secondary hover:text-red-500 transition-opacity p-2 md:p-1 cursor-pointer"
-                  >
-                    <X className="w-5 h-5 md:w-4 md:h-4" />
-                  </button>
                 </div>
-              ))}
+              </div>
             </div>
+          </div>
+
+          <div className="p-4 border-t border-border-subtle flex items-center justify-between bg-background-main/50 shrink-0 mb-safe">
             <button
-              onClick={addSubtask}
-              className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent-primary transition-colors cursor-pointer py-2"
+              onClick={() => onDuplicate(currentTask)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-secondary hover:bg-background-surface hover:text-text-primary rounded-md transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              Add subtask
+              <Copy className="w-4 h-4" />
+              Duplicate
+            </button>
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
             </button>
           </div>
         </div>
-
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-border-subtle flex items-center justify-between bg-background-main/50 shrink-0 mb-safe">
-          <button
-            onClick={() => onDuplicate(task)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-secondary hover:bg-background-surface hover:text-text-primary rounded-md transition-colors cursor-pointer"
-          >
-            <Copy className="w-4 h-4" />
-            Duplicate
-          </button>
-          <button
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete
-          </button>
-        </div>
       </aside>
-      {/* Sidebar Delete Confirmation Modal */}
+
       <ConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={() => {
-          onDelete(task.id);
+          onDelete(currentTask.id);
           onClose();
         }}
         title="Delete Task"
-        message={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${currentTask.title}"? This action cannot be undone.`}
         confirmText="Delete Task"
         isDanger={true}
       />
