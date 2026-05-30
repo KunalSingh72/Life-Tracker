@@ -392,7 +392,7 @@ export default function TasksPage() {
                   >
                     {activeView === "trash"
                       ? "Empty Trash"
-                      : "Delete Displayed"}
+                      : "Delete all"}
                   </button>
                 </div>
 

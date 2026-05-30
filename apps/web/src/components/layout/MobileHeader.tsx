@@ -10,7 +10,8 @@ export default function MobileHeader() {
   const location = useLocation();
 
   // Hide the global top bar on pages that handle their own full-screen mobile view
-  const isFullScreenPage = location.pathname === "/tasks";
+  const isFullScreenPage =
+    location.pathname === "/tasks" || location.pathname === "/notes";
 
   return (
     <>
@@ -49,14 +50,14 @@ export default function MobileHeader() {
 
       {/* Slide-out Navigation Drawer (Z-Index increased to 60 to clear all sidebars) */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] flex md:hidden">
+        <div className="fixed inset-0 z-60 flex md:hidden">
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={closeMobileMenu}
             aria-hidden="true"
           ></div>
 
-          <aside className="relative w-[280px] max-w-sm h-full bg-background-surface flex flex-col shadow-2xl animate-in slide-in-from-left-2 duration-200">
+          <aside className="relative w-70 max-w-sm h-full bg-background-surface flex flex-col shadow-2xl animate-in slide-in-from-left-2 duration-200">
             <div className="h-16 flex items-center justify-between px-6 border-b border-border-subtle shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-accent-primary grid place-items-center">
@@ -106,7 +107,7 @@ export default function MobileHeader() {
             <div className="p-4 space-y-2 border-t border-border-subtle shrink-0">
               <NavLink
                 to="/settings"
-                onClick={closeMobileMenu}
+                onClick={closeMobileMenu} 
                 className={({ isActive }) =>
                   `flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive
@@ -118,12 +119,27 @@ export default function MobileHeader() {
                 {({ isActive }) => (
                   <>
                     <Settings
-                      className={`w-5 h-5 transition-colors ${isActive ? "text-accent-primary" : "text-text-secondary"}`}
+                      className={`w-5 h-5 transition-colors ${
+                        isActive ? "text-accent-primary" : "text-text-secondary"
+                      }`}
                     />
                     Settings
                   </>
                 )}
               </NavLink>
+
+              {/* Theme Toggle Button added to Mobile Drawer */}
+              <button
+                onClick={toggleTheme}
+                className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-background-main hover:text-text-primary transition-all text-left cursor-pointer"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+                Theme
+              </button>
 
               <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-background-main hover:text-text-primary transition-all text-left cursor-pointer">
                 <LogOut className="w-5 h-5" />

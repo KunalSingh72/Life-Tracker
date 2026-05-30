@@ -52,6 +52,16 @@ life-tracker/
 │       │   │   │   └── TasksPage.tsx
 │       │   │   │
 │       │   │   ├── notes/
+│       │   │   |   ├── store/
+│       │   │   │   │   └── notes.store.ts
+│       │   │   │   │
+│       │   │   |   ├── utils/
+│       │   │   │   │   └── note.utils.ts
+│       │   │   │   │
+│       │   │   |   ├── components/
+│       │   │   │   │   ├── NoteCard.tsx
+│       │   │   │   │   ├── RichTextEditor.tsx
+│       │   │   │   │   └── NoteEditorModal.tsx
 │       │   │   │   └──NotesPage.tsx 
 │       │   │   │
 │       │   │   ├── goals/
@@ -105,7 +115,8 @@ life-tracker/
 │   │   │
 │   │   ├── src/
 │   │   │   └── index.ts
-│   │   │   └── tasks.type.ts
+│   │   │   └── task.types.ts
+│   │   │   └── note.types.ts
 │   │   │
 │   │   ├── package.json
 │   │   └── tsconfig.json
@@ -320,66 +331,67 @@ export default function Sidebar() {
 
 ------
 Mobileheader.tsx
-import { useState } from "react";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { Menu, X, Moon, Sun, Settings, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { NAVIGATION_LINKS } from "@/config/navigation";
+import { useUiStore } from "@/stores/ui.store";
 
 export default function MobileHeader() {
   const { theme, toggleTheme } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isMobileMenuOpen, openMobileMenu, closeMobileMenu } = useUiStore();
+  const location = useLocation();
 
-  const closeMenu = () => setIsOpen(false);
+  // Hide the global top bar on pages that handle their own full-screen mobile view
+  const isFullScreenPage =
+    location.pathname === "/tasks" || location.pathname === "/notes";
 
   return (
     <>
-      {/* Top Navigation Bar */}
-      <header className="h-16 border-b border-border-subtle bg-background-surface flex items-center px-4 md:hidden justify-between z-20 relative">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsOpen(true)}
-            className="p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+      {!isFullScreenPage && (
+        <header className="h-16 border-b border-border-subtle bg-background-surface flex items-center px-4 md:hidden justify-between z-20 relative">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={openMobileMenu}
+              className="p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
 
-          {/* Mobile Branding */}
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-accent-primary grid place-items-center">
-              <div className="w-2.5 h-2.5 bg-background-surface rounded-sm"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded bg-accent-primary grid place-items-center">
+                <div className="w-2.5 h-2.5 bg-background-surface rounded-sm"></div>
+              </div>
+              <span className="font-bold text-text-primary">Business</span>
             </div>
-            <span className="font-bold text-text-primary">Business</span>
           </div>
-        </div>
 
-        <button
-          onClick={toggleTheme}
-          className="p-2 -mr-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === "dark" ? (
-            <Sun className="w-5 h-5" />
-          ) : (
-            <Moon className="w-5 h-5" />
-          )}
-        </button>
-      </header>
+          <button
+            onClick={toggleTheme}
+            className="p-2 -mr-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+          </button>
+        </header>
+      )}
 
-      {/* Slide-out Navigation Drawer */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          {/* Semi-transparent Backdrop */}
+      {/* Slide-out Navigation Drawer (Z-Index increased to 60 to clear all sidebars) */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-60 flex md:hidden">
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-            onClick={closeMenu}
+            onClick={closeMobileMenu}
             aria-hidden="true"
           ></div>
 
-          {/* Drawer Content */}
           <aside className="relative w-70 max-w-sm h-full bg-background-surface flex flex-col shadow-2xl animate-in slide-in-from-left-2 duration-200">
-            <div className="h-16 flex items-center justify-between px-6 border-b border-border-subtle">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-border-subtle shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-accent-primary grid place-items-center">
                   <div className="w-3 h-3 bg-background-surface rounded-sm"></div>
@@ -389,7 +401,7 @@ export default function MobileHeader() {
                 </span>
               </div>
               <button
-                onClick={closeMenu}
+                onClick={closeMobileMenu}
                 className="p-2 -mr-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
                 aria-label="Close menu"
               >
@@ -403,7 +415,7 @@ export default function MobileHeader() {
                 <NavLink
                   key={item.name}
                   to={item.href}
-                  onClick={closeMenu}
+                  onClick={closeMobileMenu}
                   className={({ isActive }) =>
                     `flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                       isActive
@@ -415,11 +427,7 @@ export default function MobileHeader() {
                   {({ isActive }) => (
                     <>
                       <item.icon
-                        className={`w-5 h-5 transition-colors ${
-                          isActive
-                            ? "text-accent-primary"
-                            : "text-text-secondary"
-                        }`}
+                        className={`w-5 h-5 transition-colors ${isActive ? "text-accent-primary" : "text-text-secondary"}`}
                       />
                       {item.name}
                     </>
@@ -429,10 +437,10 @@ export default function MobileHeader() {
             </nav>
 
             {/* Bottom Actions */}
-            <div className="p-4 space-y-2 border-t border-border-subtle">
+            <div className="p-4 space-y-2 border-t border-border-subtle shrink-0">
               <NavLink
                 to="/settings"
-                onClick={closeMenu}
+                onClick={closeMobileMenu} 
                 className={({ isActive }) =>
                   `flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive
@@ -452,6 +460,19 @@ export default function MobileHeader() {
                   </>
                 )}
               </NavLink>
+
+              {/* Theme Toggle Button added to Mobile Drawer */}
+              <button
+                onClick={toggleTheme}
+                className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-background-main hover:text-text-primary transition-all text-left cursor-pointer"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+                Theme
+              </button>
 
               <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-background-main hover:text-text-primary transition-all text-left cursor-pointer">
                 <LogOut className="w-5 h-5" />
@@ -920,7 +941,7 @@ import {
 } from "lucide-react";
 import type { Task, Priority } from "@life-tracker/types";
 
-import { TaskSidebar } from "./components/TaskSidebar";
+import { TaskDetails } from "./components/TaskDetails";
 import { TaskInput } from "./components/TaskInput";
 import { TaskMenu, type TaskView } from "./components/TaskMenu";
 import { TaskItem } from "./components/TaskItem";
@@ -1288,7 +1309,7 @@ export default function TasksPage() {
                   >
                     {activeView === "trash"
                       ? "Empty Trash"
-                      : "Delete Displayed"}
+                      : "Delete all"}
                   </button>
                 </div>
 
@@ -1387,7 +1408,7 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <TaskSidebar
+      <TaskDetails
         task={tasks.find((t) => t.id === selectedTaskId) || null}
         isOpen={!!selectedTaskId}
         onClose={() => setSelectedTaskId(null)}
@@ -2057,6 +2078,870 @@ export function TaskSidebar({
   );
 }
 -----
+NoteCard.tsx
+import { Pin, Circle, CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
+import type { Note } from "@life-tracker/types";
+import { getNoteColorClasses } from "../utils/note.utils";
+import { useNotesStore } from "../store/notes.store";
+import { cn } from "@/lib/utils";
+
+interface NoteCardProps {
+  note: Note;
+  onClick: () => void;
+  isTrashView?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string, e: React.MouseEvent) => void;
+}
+
+export function NoteCard({
+  note,
+  onClick,
+  isTrashView = false,
+  isSelected = false,
+  onToggleSelect,
+}: NoteCardProps) {
+  const { togglePin, restoreNote, hardDeleteNote } = useNotesStore();
+  const activeColorClasses = getNoteColorClasses(note.color);
+
+  // TipTap stores empty paragraphs as '<p></p>'. We strip HTML to check for true emptiness.
+  const rawText = note.content.replace(/<[^>]*>?/gm, "").trim();
+  const isEmpty =
+    !note.title.trim() && !rawText && !note.content.includes("<img");
+
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "group relative flex flex-col p-5 rounded-2xl border transition-all cursor-pointer break-inside-avoid mb-4 hover:shadow-lg",
+        activeColorClasses,
+        note.color === "default" &&
+          "bg-background-surface hover:border-text-secondary/30",
+        isSelected &&
+          "ring-2 ring-accent-primary ring-offset-2 ring-offset-background-main border-accent-primary",
+      )}
+    >
+      {/* Top Right Actions */}
+      <div className="absolute top-4 right-4 flex items-center gap-1 z-10">
+        {!isTrashView ? (
+          <>
+            {/* Multi-Select Checkbox */}
+            {onToggleSelect && (
+              <button
+                onClick={(e) => onToggleSelect(note.id, e)}
+                // Changed: opacity-100 on mobile, hover opacity on desktop (md:)
+                className={`p-1.5 rounded-full transition-all duration-200 ${
+                  isSelected
+                    ? "opacity-100 text-accent-primary"
+                    : "opacity-100 md:opacity-0 md:group-hover:opacity-100 text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {isSelected ? (
+                  <CheckCircle2 className="w-5 h-5 fill-accent-primary/20" />
+                ) : (
+                  <Circle className="w-5 h-5" />
+                )}
+              </button>
+            )}
+
+            {/* Pin Toggle */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePin(note.id);
+              }}
+              // Changed: opacity-100 on mobile, hover opacity on desktop (md:)
+              className={`p-1.5 rounded-full transition-all duration-200 ${
+                note.isPinned
+                  ? "opacity-100 bg-accent-primary/10 text-accent-primary"
+                  : "opacity-100 md:opacity-0 md:group-hover:opacity-100 bg-background-main/50 text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              <Pin
+                className={`w-4 h-4 ${note.isPinned ? "fill-current" : ""}`}
+              />
+            </button>
+          </>
+        ) : (
+          /* Trash View Actions */
+          // Changed: opacity-100 on mobile, hover opacity on desktop (md:)
+          <div className="flex bg-background-surface/80 backdrop-blur-sm rounded-lg border border-border-subtle p-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                restoreNote(note.id);
+              }}
+              className="p-1.5 text-text-secondary hover:text-accent-primary rounded-md hover:bg-background-main transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                hardDeleteNote(note.id);
+              }}
+              className="p-1.5 text-text-secondary hover:text-red-500 rounded-md hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Content Area */}
+      <div
+        className={cn(
+          "transition-opacity",
+          isEmpty ? "opacity-40" : "opacity-100",
+        )}
+      >
+        {isEmpty ? (
+          <div className="py-4 text-center italic text-text-secondary font-medium min-h-20 flex items-center justify-center">
+            Empty
+          </div>
+        ) : (
+          <>
+            {note.title && (
+              <h3 className="text-lg font-bold text-text-primary mb-2 pr-17.5 line-clamp-2">
+                {note.title}
+              </h3>
+            )}
+            <div className="relative overflow-hidden line-clamp-6 text-sm text-text-secondary">
+              <div
+                dangerouslySetInnerHTML={{ __html: note.content }}
+                className="[&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-1"
+              />
+              <div
+                className={`absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t to-transparent ${note.color === "default" ? "from-background-surface" : "from-transparent"}`}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+-----
+NoteEditorModal.tsx
+import { useState, useRef, useEffect } from "react";
+import { X, Palette, Trash2, ChevronLeft } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import RichTextEditor from "./RichTextEditor";
+import { useNotesStore } from "../store/notes.store";
+import type { NoteColor } from "@life-tracker/types";
+import { cn } from "@/lib/utils";
+
+interface NoteEditorModalProps {
+  noteId: string | null;
+  onClose: () => void;
+}
+
+const editorBorderColors: Record<NoteColor, string> = {
+  default: "border-border-subtle",
+  red: "border-red-500 shadow-red-500/10",
+  blue: "border-blue-500 shadow-blue-500/10",
+  green: "border-green-500 shadow-green-500/10",
+  yellow: "border-yellow-500 shadow-yellow-500/10",
+  purple: "border-purple-500 shadow-purple-500/10",
+};
+
+export default function NoteEditorModal({
+  noteId,
+  onClose,
+}: NoteEditorModalProps) {
+  const { notes, updateNote, changeColor, softDeleteNote } = useNotesStore();
+  const note = notes.find((n) => n.id === noteId);
+
+  const [title, setTitle] = useState(note?.title || "");
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowColorPicker(false);
+      }
+    };
+    if (showColorPicker)
+      document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showColorPicker]);
+
+  if (!note || !noteId) return null;
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      updateNote(noteId, { title: newTitle });
+    }, 500);
+  };
+
+  const handleDelete = () => {
+    softDeleteNote(noteId);
+    onClose();
+  };
+
+  const colors: { value: NoteColor; class: string }[] = [
+    { value: "default", class: "bg-background-surface border-border-subtle" },
+    { value: "red", class: "bg-red-500 border-red-500" },
+    { value: "blue", class: "bg-blue-500 border-blue-500" },
+    { value: "green", class: "bg-green-500 border-green-500" },
+    { value: "yellow", class: "bg-yellow-500 border-yellow-500" },
+    { value: "purple", class: "bg-purple-500 border-purple-500" },
+  ];
+
+  const lastEdited = format(parseISO(note.updatedAt), "MMM d, h:mm a");
+
+  return (
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-0 md:p-6 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+      <div
+        className={cn(
+          "relative flex h-full md:h-[85vh] w-full max-w-4xl flex-col overflow-hidden md:rounded-2xl border-2 bg-background-surface shadow-2xl transition-all duration-300",
+          editorBorderColors[note.color],
+        )}
+      >
+        <div className="relative z-20 flex items-center gap-2 border-b border-border-subtle/50 p-3 md:p-5 shrink-0">
+          {/* Mobile Back Button */}
+          <button
+            onClick={onClose}
+            className="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary rounded-xl transition-colors shrink-0"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+
+          <div className="flex-1 flex flex-col">
+            <input
+              type="text"
+              value={title}
+              onChange={handleTitleChange}
+              placeholder="Title"
+              className="bg-transparent text-xl md:text-3xl font-bold text-text-primary outline-none placeholder:text-text-secondary"
+            />
+            <span className="text-xs text-text-secondary font-medium mt-1">
+              Last edited: {lastEdited}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
+            {/* Full Color Picker Block */}
+            <div className="relative" ref={colorPickerRef}>
+              <button
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-text-secondary transition-colors hover:bg-background-main hover:text-text-primary"
+              >
+                <Palette className="h-5 w-5" />
+              </button>
+
+              {showColorPicker && (
+                <div className="absolute right-0 top-12 z-50 flex gap-2 rounded-xl border border-border-subtle bg-background-surface p-3 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+                  {colors.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => {
+                        changeColor(noteId, c.value);
+                        setShowColorPicker(false);
+                      }}
+                      className={cn(
+                        "h-6 w-6 rounded-full border opacity-80 transition-all hover:scale-110 hover:opacity-100",
+                        c.class,
+                        note.color === c.value &&
+                          "ring-2 ring-accent-primary ring-offset-2 ring-offset-background-surface opacity-100",
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleDelete}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-text-secondary transition-colors hover:bg-red-500/10 hover:text-red-500"
+              title="Move to Trash"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+            <div className="w-px h-6 bg-border-subtle mx-1 hidden md:block" />
+
+            {/* Hide X on mobile */}
+            <button
+              onClick={onClose}
+              className="hidden md:flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-text-secondary transition-colors hover:bg-background-main hover:text-text-primary"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-hidden p-4 md:p-5">
+          <RichTextEditor noteId={note.id} initialContent={note.content} />
+        </div>
+      </div>
+    </div>
+  );
+}
+-------
+RichTextEditor.tsx
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Heading1,
+  Heading2,
+  List,
+  ListOrdered,
+  Undo,
+  Redo,
+} from "lucide-react";
+import { useNotesStore } from "../store/notes.store";
+
+interface RichTextEditorProps {
+  noteId: string;
+  initialContent: string;
+}
+
+const MenuBar = ({ editor }: { editor: Editor | null }) => {
+  if (!editor) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 border-b border-border-subtle/50 pb-3 mb-3">
+      <button
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`p-1.5 rounded-lg transition-colors ${editor.isActive("bold") ? "bg-accent-primary/20 text-accent-primary" : "text-text-secondary hover:bg-background-main hover:text-text-primary"}`}
+      >
+        <Bold className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`p-1.5 rounded-lg transition-colors ${editor.isActive("italic") ? "bg-accent-primary/20 text-accent-primary" : "text-text-secondary hover:bg-background-main hover:text-text-primary"}`}
+      >
+        <Italic className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={`p-1.5 rounded-lg transition-colors ${editor.isActive("strike") ? "bg-accent-primary/20 text-accent-primary" : "text-text-secondary hover:bg-background-main hover:text-text-primary"}`}
+      >
+        <Strikethrough className="w-4 h-4" />
+      </button>
+
+      <div className="w-px h-4 bg-border-subtle mx-1" />
+
+      <button
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        className={`p-1.5 rounded-lg transition-colors ${editor.isActive("heading", { level: 1 }) ? "bg-accent-primary/20 text-accent-primary" : "text-text-secondary hover:bg-background-main hover:text-text-primary"}`}
+      >
+        <Heading1 className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        className={`p-1.5 rounded-lg transition-colors ${editor.isActive("heading", { level: 2 }) ? "bg-accent-primary/20 text-accent-primary" : "text-text-secondary hover:bg-background-main hover:text-text-primary"}`}
+      >
+        <Heading2 className="w-4 h-4" />
+      </button>
+
+      <div className="w-px h-4 bg-border-subtle mx-1" />
+
+      <button
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`p-1.5 rounded-lg transition-colors ${editor.isActive("bulletList") ? "bg-accent-primary/20 text-accent-primary" : "text-text-secondary hover:bg-background-main hover:text-text-primary"}`}
+      >
+        <List className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={`p-1.5 rounded-lg transition-colors ${editor.isActive("orderedList") ? "bg-accent-primary/20 text-accent-primary" : "text-text-secondary hover:bg-background-main hover:text-text-primary"}`}
+      >
+        <ListOrdered className="w-4 h-4" />
+      </button>
+
+      <div className="w-px h-4 bg-border-subtle mx-1" />
+
+      <button
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().undo()}
+        className="p-1.5 rounded-lg text-text-secondary hover:bg-background-main hover:text-text-primary disabled:opacity-30 transition-colors"
+      >
+        <Undo className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().redo()}
+        className="p-1.5 rounded-lg text-text-secondary hover:bg-background-main hover:text-text-primary disabled:opacity-30 transition-colors"
+      >
+        <Redo className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
+export default function RichTextEditor({
+  noteId,
+  initialContent,
+}: RichTextEditorProps) {
+  const updateNote = useNotesStore((state) => state.updateNote);
+
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: initialContent,
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[300px] text-text-primary [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:text-2xl [&_h2]:font-bold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p]:leading-relaxed",
+      },
+    },
+    onUpdate: ({ editor }) => {
+      updateNote(noteId, { content: editor.getHTML() });
+    },
+  });
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="order-2 md:order-1 border-t md:border-t-0 md:border-b border-border-subtle/50 pt-3 md:pt-0 md:pb-3 mt-2 md:mt-0 md:mb-3 shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
+        <MenuBar editor={editor} />
+      </div>
+
+      <div className="order-1 md:order-2 flex-1 overflow-y-auto pb-2 md:pb-0">
+        <EditorContent editor={editor} />
+      </div>
+    </div>
+  );
+}
+-------
+NotesPage.tsx
+import { useState, useEffect } from "react";
+import { Menu, Plus, Trash2, StickyNote, X } from "lucide-react";
+import { useUiStore } from "@/stores/ui.store";
+import { useNotesStore } from "./store/notes.store";
+import NoteEditorModal from "./components/NoteEditorModal";
+import { NoteCard } from "./components/NoteCard";
+import type { Note } from "@life-tracker/types";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+
+type NotesView = "active" | "trash";
+
+export default function NotesPage() {
+  const { openMobileMenu } = useUiStore();
+  const { notes, addNote, cleanOldTrash, softDeleteMultiple } = useNotesStore();
+
+  const [activeView, setActiveView] = useState<NotesView>("active");
+  const [prevActiveView, setPrevActiveView] = useState<NotesView>("active");
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+
+  // Multi-select state
+  const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+
+  if (activeView !== prevActiveView) {
+    setPrevActiveView(activeView);
+    setSelectedNotes(new Set());
+  }
+
+  useEffect(() => {
+    cleanOldTrash();
+  }, [cleanOldTrash]);
+
+  useEffect(() => {
+    cleanOldTrash();
+  }, [cleanOldTrash]);
+
+  const activeNotes = notes.filter((n) => !n.deletedAt);
+  const trashedNotes = notes.filter((n) => !!n.deletedAt);
+
+  const pinnedNotes = activeNotes.filter((n) => n.isPinned);
+  const otherNotes = activeNotes.filter((n) => !n.isPinned);
+
+  const handleCreateNote = () => {
+    const newNote: Note = {
+      id: crypto.randomUUID(),
+      title: "",
+      content: "",
+      color: "default",
+      isPinned: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    addNote(newNote);
+    setActiveNoteId(newNote.id);
+  };
+
+  const handleToggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = new Set(selectedNotes);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedNotes(next);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedNotes.size === activeNotes.length) {
+      setSelectedNotes(new Set());
+    } else {
+      setSelectedNotes(new Set(activeNotes.map((n) => n.id)));
+    }
+  };
+
+  const handleBatchDelete = () => {
+    softDeleteMultiple(Array.from(selectedNotes));
+    setSelectedNotes(new Set());
+    setIsConfirmDeleteOpen(false);
+  };
+
+  return (
+    <div className="flex h-full w-full absolute inset-0 z-20 bg-background-main md:static md:bg-transparent overflow-hidden">
+      <div className="flex-1 flex flex-col h-full min-w-0 transition-all duration-300 relative">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between px-4 h-16 border-b border-border-subtle shrink-0 bg-background-surface z-10">
+          {selectedNotes.size > 0 ? (
+            <div className="flex items-center justify-between w-full animate-in fade-in zoom-in-95">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedNotes(new Set())}
+                  className="p-1.5 -ml-1 text-text-secondary hover:text-text-primary"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <span className="font-bold text-text-primary text-lg">
+                  {selectedNotes.size} Selected
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleSelectAll}
+                  className="text-sm font-medium text-text-secondary hover:text-text-primary"
+                >
+                  {selectedNotes.size === activeNotes.length
+                    ? "Deselect"
+                    : "Select All"}
+                </button>
+                <button
+                  onClick={() => setIsConfirmDeleteOpen(true)}
+                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-md"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between w-full animate-in fade-in zoom-in-95">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={openMobileMenu}
+                  className="p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+                <span className="text-2xl font-extrabold bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent">
+                  Notes
+                </span>
+              </div>
+              <div className="flex bg-background-main p-1 rounded-lg">
+                <button
+                  onClick={() => setActiveView("active")}
+                  className={`p-1.5 rounded-md ${activeView === "active" ? "bg-background-surface shadow-sm text-text-primary" : "text-text-secondary"}`}
+                >
+                  <StickyNote className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setActiveView("trash")}
+                  className={`p-1.5 rounded-md ${activeView === "trash" ? "bg-background-surface shadow-sm text-red-500" : "text-text-secondary"}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Header & View Toggles */}
+        <div className="hidden md:flex pt-8 pb-6 px-8 items-center justify-between shrink-0">
+          <h1 className="text-4xl font-extrabold tracking-tight">
+            <span className="bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent bg-size-[200%_auto] animate-gradient">
+              Notes
+            </span>
+          </h1>
+          <div className="flex bg-background-surface border border-border-subtle p-1 rounded-xl">
+            <button
+              onClick={() => setActiveView("active")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeView === "active" ? "bg-background-main text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"}`}
+            >
+              <StickyNote className="w-4 h-4" /> Active
+            </button>
+            <button
+              onClick={() => setActiveView("trash")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeView === "trash" ? "bg-red-500/10 text-red-500 shadow-sm" : "text-text-secondary hover:text-red-500"}`}
+            >
+              <Trash2 className="w-4 h-4" /> Trash
+            </button>
+          </div>
+        </div>
+
+        {/* Note Input Trigger (Hidden in Trash View) */}
+        {activeView === "active" && (
+          <div className="px-4 md:px-8 max-w-2xl mx-auto w-full mb-8 shrink-0 mt-4 md:mt-0">
+            <div
+              onClick={handleCreateNote}
+              className="flex items-center gap-4 bg-background-surface border border-border-subtle rounded-2xl p-4 text-text-secondary cursor-pointer shadow-sm hover:shadow-md hover:border-accent-primary/50 transition-all group"
+            >
+              <div className="p-2 rounded-xl bg-background-main group-hover:bg-accent-subtle group-hover:text-accent-primary transition-colors">
+                <Plus className="w-5 h-5" />
+              </div>
+              <span className="font-medium text-lg">Take a note...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Trash Notice */}
+        {activeView === "trash" && (
+          <div className="px-4 md:px-8 mb-6 shrink-0 text-center">
+            <p className="text-sm font-medium text-text-secondary bg-background-surface inline-block px-4 py-2 rounded-full border border-border-subtle">
+              Notes in Trash are deleted after 30 days.
+            </p>
+          </div>
+        )}
+
+        {/* Masonry Layout Area */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-24 md:pb-8">
+          {(activeView === "active"
+            ? activeNotes.length
+            : trashedNotes.length) === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-text-secondary opacity-60">
+              {activeView === "active" ? (
+                <>
+                  <StickyNote className="w-16 h-16 mb-4 stroke-[1.5]" />
+                  <p className="text-lg font-medium">
+                    Notes you add appear here
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-16 h-16 mb-4 stroke-[1.5]" />
+                  <p className="text-lg font-medium">Trash is empty</p>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="max-w-7xl mx-auto">
+              {activeView === "active" ? (
+                <>
+                  {/* Pinned Section */}
+                  {pinnedNotes.length > 0 && (
+                    <div className="mb-10">
+                      <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4 ml-2">
+                        Pinned
+                      </h3>
+                      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+                        {pinnedNotes.map((note) => (
+                          <NoteCard
+                            key={note.id}
+                            note={note}
+                            onClick={() => setActiveNoteId(note.id)}
+                            isSelected={selectedNotes.has(note.id)}
+                            onToggleSelect={handleToggleSelect}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Others Section */}
+                  {otherNotes.length > 0 && (
+                    <div>
+                      {pinnedNotes.length > 0 && (
+                        <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4 ml-2">
+                          Others
+                        </h3>
+                      )}
+                      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+                        {otherNotes.map((note) => (
+                          <NoteCard
+                            key={note.id}
+                            note={note}
+                            onClick={() => setActiveNoteId(note.id)}
+                            isSelected={selectedNotes.has(note.id)}
+                            onToggleSelect={handleToggleSelect}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Trash Section */
+                <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+                  {trashedNotes.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      onClick={() => {}}
+                      isTrashView={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Multi-Select Floating Action Bar */}
+        {selectedNotes.size > 0 && (
+          <div className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 items-center gap-4 bg-background-surface border border-border-subtle shadow-2xl rounded-2xl px-5 py-3 z-30 animate-in slide-in-from-bottom-8">
+            <span className="font-bold text-text-primary whitespace-nowrap">
+              {selectedNotes.size} Selected
+            </span>
+            <div className="w-px h-6 bg-border-subtle" />
+            <button
+              onClick={handleSelectAll}
+              className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors whitespace-nowrap"
+            >
+              {selectedNotes.size === activeNotes.length
+                ? "Deselect All"
+                : "Select All"}
+            </button>
+            <button
+              onClick={() => setIsConfirmDeleteOpen(true)}
+              className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors whitespace-nowrap"
+            >
+              Delete
+            </button>
+            <div className="w-px h-6 bg-border-subtle" />
+            <button
+              onClick={() => setSelectedNotes(new Set())}
+              className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors whitespace-nowrap"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Editor Modal Overlay */}
+      {activeNoteId && (
+        <NoteEditorModal
+          noteId={activeNoteId}
+          onClose={() => setActiveNoteId(null)}
+        />
+      )}
+
+      {/* Batch Delete Confirmation */}
+      <ConfirmModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={handleBatchDelete}
+        title="Delete Selected Notes"
+        message={`Are you sure you want to move ${selectedNotes.size} note${selectedNotes.size > 1 ? "s" : ""} to the trash?`}
+        confirmText="Move to Trash"
+        isDanger={true}
+      />
+    </div>
+  );
+}
+-----
+note.utils.ts
+import type { NoteColor } from "@life-tracker/types";
+
+export const getNoteColorClasses = (color: NoteColor) => {
+  switch (color) {
+    case "red": return "bg-red-500/10 border-red-500/30";
+    case "blue": return "bg-blue-500/10 border-blue-500/30";
+    case "green": return "bg-green-500/10 border-green-500/30";
+    case "yellow": return "bg-yellow-500/10 border-yellow-500/30";
+    case "purple": return "bg-purple-500/10 border-purple-500/30";
+    default: return "bg-background-surface border-border-subtle";
+  }
+};
+---------
+notes.store.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Note, NoteColor } from "@life-tracker/types";
+
+interface NotesState {
+  notes: Note[];
+  addNote: (note: Note) => void;
+  updateNote: (id: string, updates: Partial<Note>) => void;
+  softDeleteNote: (id: string) => void;
+  softDeleteMultiple: (ids: string[]) => void;
+  hardDeleteNote: (id: string) => void;
+  hardDeleteMultiple: (ids: string[]) => void;
+  restoreNote: (id: string) => void;
+  changeColor: (id: string, color: NoteColor) => void;
+  togglePin: (id: string) => void;
+  cleanOldTrash: () => void;
+}
+
+export const useNotesStore = create<NotesState>()(
+  persist(
+    (set) => ({
+      notes: [],
+      addNote: (note) => set((state) => ({ notes: [note, ...state.notes] })),
+      updateNote: (id, updates) =>
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n
+          ),
+        })),
+      softDeleteNote: (id) =>
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            n.id === id ? { ...n, deletedAt: new Date().toISOString(), isPinned: false } : n
+          ),
+        })),
+      softDeleteMultiple: (ids) =>
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            ids.includes(n.id) ? { ...n, deletedAt: new Date().toISOString(), isPinned: false } : n
+          ),
+        })),
+      hardDeleteNote: (id) =>
+        set((state) => ({ notes: state.notes.filter((n) => n.id !== id) })),
+      hardDeleteMultiple: (ids) =>
+        set((state) => ({ notes: state.notes.filter((n) => !ids.includes(n.id)) })),
+      restoreNote: (id) =>
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            n.id === id ? { ...n, deletedAt: undefined, updatedAt: new Date().toISOString() } : n
+          ),
+        })),
+      changeColor: (id, color) =>
+        set((state) => ({
+          notes: state.notes.map((n) => (n.id === id ? { ...n, color, updatedAt: new Date().toISOString() } : n)),
+        })),
+      togglePin: (id) =>
+        set((state) => ({
+          notes: state.notes.map((n) =>
+            n.id === id ? { ...n, isPinned: !n.isPinned, updatedAt: new Date().toISOString() } : n
+          ),
+        })),
+      cleanOldTrash: () =>
+        set((state) => {
+          const now = new Date();
+          return {
+            notes: state.notes.filter((n) => {
+              if (!n.deletedAt) return true;
+              const deletedDate = new Date(n.deletedAt);
+              const diffTime = Math.abs(now.getTime() - deletedDate.getTime());
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return diffDays <= 30; // Keep if deleted less than 30 days ago
+            }),
+          };
+        }),
+    }),
+    { name: "life-tracker-notes" }
+  )
+);
+----
 ui.store.tsx
 
 import { create } from "zustand";
@@ -2075,8 +2960,14 @@ export const useUiStore = create<UiState>((set) => ({
   toggleMobileMenu: () =>
     set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
 }));
+---
+utils.ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 -----
 useTheme.ts
 import { useContext } from "react";
@@ -2492,8 +3383,22 @@ life-tracker/packages/types/tsconfig.json
   },
   "include": ["src"]
 }
+-----
+life-tracker/packages/types/src/note.types.ts
+export type NoteColor = "default" | "red" | "blue" | "green" | "yellow" | "purple";
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string; 
+  color: NoteColor;
+  isPinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string; 
+}
 ---
-life-tracker/packages/types/src/tasks.type.ts
+life-tracker/packages/types/src/task.types.ts
 export type Priority = "none" | "low" | "medium" | "high";
 
 export interface Subtask {
@@ -2514,7 +3419,8 @@ export interface Task {
 }
 ------------------
 life-tracker/packages/types/src/index.ts
-export * from './tasks.type';
+export * from './task.types';
+export * from './note.types'; 
 ----
 
 life-tracker/packages/utils/package.json
