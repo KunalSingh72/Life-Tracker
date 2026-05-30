@@ -30,10 +30,6 @@ export default function NotesPage() {
     cleanOldTrash();
   }, [cleanOldTrash]);
 
-  useEffect(() => {
-    cleanOldTrash();
-  }, [cleanOldTrash]);
-
   const activeNotes = notes.filter((n) => !n.deletedAt);
   const trashedNotes = notes.filter((n) => !!n.deletedAt);
 

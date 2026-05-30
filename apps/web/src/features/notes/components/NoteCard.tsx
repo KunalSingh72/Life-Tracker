@@ -120,7 +120,7 @@ export function NoteCard({
         ) : (
           <>
             {note.title && (
-              <h3 className="text-lg font-bold text-text-primary mb-2 pr-17.5 line-clamp-2">
+              <h3 className="text-lg font-bold text-text-primary mb-2 pr-16 line-clamp-2">
                 {note.title}
               </h3>
             )}
