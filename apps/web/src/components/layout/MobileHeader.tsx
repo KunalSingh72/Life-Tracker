@@ -9,9 +9,9 @@ export default function MobileHeader() {
   const { isMobileMenuOpen, openMobileMenu, closeMobileMenu } = useUiStore();
   const location = useLocation();
 
-  // Hide the global top bar on pages that handle their own full-screen mobile view
-  const isFullScreenPage =
-    location.pathname === "/tasks" || location.pathname === "/notes";
+  const isFullScreenPage = ["/tasks", "/notes", "/calendar"].includes(
+    location.pathname,
+  );
 
   return (
     <>
@@ -107,7 +107,7 @@ export default function MobileHeader() {
             <div className="p-4 space-y-2 border-t border-border-subtle shrink-0">
               <NavLink
                 to="/settings"
-                onClick={closeMobileMenu} 
+                onClick={closeMobileMenu}
                 className={({ isActive }) =>
                   `flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive

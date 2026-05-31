@@ -1,9 +1,16 @@
 export type Priority = "none" | "low" | "medium" | "high";
+export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "yearly";
 
 export interface Subtask {
   id: string;
   title: string;
   completed: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface Task {
@@ -15,4 +22,7 @@ export interface Task {
   subtasks: Subtask[];
   createdAt: string; 
   deletedAt?: string; 
+  categoryId?: string;
+  recurrence?: Recurrence;
+  completedDates?: string[]; 
 }

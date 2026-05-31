@@ -8,11 +8,14 @@ import {
   CheckCircle2,
   Circle,
   ChevronLeft,
+  Repeat,
+  Folder,
 } from "lucide-react";
-import type { Task, Priority, Subtask } from "@life-tracker/types"; // <-- Updated Import
+import type { Task, Priority, Subtask, Recurrence } from "@life-tracker/types"; // <-- Updated Import
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Select } from "@/components/ui/Select";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { useTasksStore } from "../store/tasks.store"; 
 
 interface TaskDetailsProps {
   task: Task | null;
@@ -36,6 +39,32 @@ export function TaskDetails({
 
   const [prevTask, setPrevTask] = useState<Task | null>(task);
   const [displayTask, setDisplayTask] = useState<Task | null>(task);
+
+  const categories = useTasksStore((state) => state.categories);
+
+  const categoryOptions = [
+    {
+      value: "none",
+      label: "No Category",
+      icon: <Folder className="w-4 h-4 text-text-secondary" />,
+    },
+    ...categories.map((c) => ({
+      value: c.id,
+      label: c.name,
+      icon: <div className={`w-3 h-3 rounded-full ${c.color}`} />,
+    })),
+  ];
+  const recurrenceOptions = [
+    {
+      value: "none",
+      label: "Does not repeat",
+      icon: <Repeat className="w-4 h-4" />,
+    },
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "yearly", label: "Yearly" },
+  ];
 
   if (task !== prevTask) {
     setPrevTask(task);
@@ -97,6 +126,8 @@ export function TaskDetails({
       e.currentTarget.blur();
     }
   };
+
+  
 
   return (
     <>
@@ -181,6 +212,42 @@ export function TaskDetails({
                     onChange={(date) =>
                       onUpdate({ ...currentTask, dueDate: date })
                     }
+                    align="right"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <span className="w-24 text-sm text-text-secondary">
+                  Recurrence
+                </span>
+                <div className="flex-1">
+                  <Select
+                    value={currentTask.recurrence || "none"}
+                    // Fix: Replaced 'any' with the proper 'Recurrence' type
+                    onChange={(val) =>
+                      onUpdate({
+                        ...currentTask,
+                        recurrence: val as Recurrence,
+                      })
+                    }
+                    options={recurrenceOptions}
+                    align="right"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <span className="w-24 text-sm text-text-secondary">
+                  Category
+                </span>
+                <div className="flex-1">
+                  <Select
+                    value={currentTask.categoryId || "none"}
+                    onChange={(val) =>
+                      onUpdate({ ...currentTask, categoryId: val })
+                    }
+                    options={categoryOptions}
                     align="right"
                   />
                 </div>

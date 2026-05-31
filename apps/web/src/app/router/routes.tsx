@@ -7,6 +7,7 @@ import HealthPage from "@/features/health/HealthPage";
 import GoalsPage from "@/features/goals/GoalsPage";
 import NotesPage from "@/features/notes/NotesPage";
 import Settings from "@/features/settings/Settings";
+import CalendarPage from "@/features/calendar/CalendarPage";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
         path: "tasks",
         element: <TasksPage />,
       },
+      { path: "calendar", element: <CalendarPage /> },
       {
         path: "goals",
         element: <GoalsPage />,
