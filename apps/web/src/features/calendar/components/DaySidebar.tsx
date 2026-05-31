@@ -68,23 +68,26 @@ export function DaySidebar({
 
   if (!date) return null;
 
-  const dayTasks = tasks.filter((t) => isTaskOnDate(t, date));
+ const dayTasks = tasks.filter(
+   (t) => t.type === "event" && isTaskOnDate(t, date),
+ );
 
-  const handleAddEvent = () => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: "",
-      completed: false,
-      priority: "none",
-      subtasks: [],
-      createdAt: new Date().toISOString(),
-      dueDate: format(date, "yyyy-MM-dd"),
-      categoryId: "none",
-      recurrence: "none",
-    };
-    addTask(newTask);
-    setExpandedTaskId(newTask.id);
-  };
+ const handleAddEvent = () => {
+   const newTask: Task = {
+     id: crypto.randomUUID(),
+     title: "",
+     completed: false,
+     priority: "none",
+     subtasks: [],
+     createdAt: new Date().toISOString(),
+     dueDate: format(date, "yyyy-MM-dd"),
+     categoryId: "none",
+     recurrence: "none",
+     type: "event", // 3. FIXED: Tag as event
+   };
+   addTask(newTask);
+   setExpandedTaskId(newTask.id);
+ };
 
   const handleDeleteAll = () => {
     const ids = dayTasks.map((t) => t.id);
@@ -476,6 +479,7 @@ export function DaySidebar({
                                     task.dueDate || format(date, "yyyy-MM-dd"),
                                   categoryId: task.categoryId || "none",
                                   recurrence: task.recurrence || "none",
+                                  type: task.type || "event", // 4. FIXED: Retain event tag on copy
                                 };
                                 addTask(duplicate);
                               }}

@@ -227,6 +227,7 @@ export default function TasksPage() {
       dueDate: format(new Date(), "yyyy-MM-dd"),
       categoryId: "none",
       recurrence: "none",
+      type: "task", // FIXED: Tag explicitly as a normal task
     };
     if (activeView !== "today") setActiveView("today");
     addTask(newTask);
@@ -502,7 +503,6 @@ export default function TasksPage() {
         onUpdate={(updatedTask) => updateTask(updatedTask.id, updatedTask)}
         onDelete={handleDeleteTask}
         onDuplicate={(task) => {
-          // ADD ": Task" right here ⬇️
           const duplicate: Task = {
             ...task,
             id: crypto.randomUUID(),
@@ -511,6 +511,7 @@ export default function TasksPage() {
             dueDate: format(new Date(), "yyyy-MM-dd"),
             categoryId: "none",
             recurrence: "none",
+            type: task.type || "task", 
           };
           addTask(duplicate);
         }}

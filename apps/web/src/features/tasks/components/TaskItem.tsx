@@ -6,6 +6,7 @@ import {
   ListTodo,
   RotateCcw,
   Trash2,
+  CalendarDays, // <-- NEW: Imported Calendar Icon
 } from "lucide-react";
 import type { Task, Priority } from "@life-tracker/types";
 import type { TaskView } from "./TaskMenu";
@@ -86,11 +87,26 @@ export function TaskItem({
         )}
 
         <div className="flex flex-col truncate">
-          <span
-            className={`font-medium transition-all truncate ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
-          >
-            {task.title}
-          </span>
+          {/* UPDATED: Title block with conditional Calendar Icon */}
+          <div className="flex items-center gap-2">
+            <span
+              className={`font-medium transition-all truncate ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}
+            >
+              {task.title || "Untitled"}
+            </span>
+
+            {task.type === "event" && (
+              <span
+                title="Calendar Event"
+                className="flex items-center shrink-0"
+              >
+                <CalendarDays
+                  className={`w-3.5 h-3.5 ${task.completed ? "text-text-secondary" : "text-accent-primary"}`}
+                />
+              </span>
+            )}
+          </div>
+
           {task.subtasks && task.subtasks.length > 0 && (
             <div className="flex items-center gap-1.5 mt-0.5 text-xs text-text-secondary">
               <ListTodo className="w-3.5 h-3.5" />

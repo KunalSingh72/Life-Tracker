@@ -154,19 +154,23 @@ export default function CalendarPage() {
               ))}
             </div>
 
-            {/* Matrix Area - STRICTLY CONSTRAINED TO AVOID SCROLLING */}
             <div className="flex-1 overflow-hidden min-h-0 relative">
               <div
                 ref={gridRef}
                 className="grid grid-cols-7 h-full w-full"
-                // minmax(0, 1fr) ensures rows shrink perfectly to fit the screen
                 style={{
                   gridTemplateRows: `repeat(${days.length / 7}, minmax(0, 1fr))`,
                 }}
               >
                 {days.map((day, idx) => {
-                  const dayTasks = tasks.filter((t) => isTaskOnDate(t, day));
+                  // STRICT filter for "event" types only
+                  const dayTasks = tasks.filter(
+                    (t) => t.type === "event" && isTaskOnDate(t, day),
+                  );
+
                   const isCurrentMonth = isSameMonth(day, currentMonth);
+
+                  // ADD THIS MISSING LINE BACK:
                   const isCurrentDay = isToday(day);
 
                   // Math to cleanly slice array and calculate indicator based on live screen height
